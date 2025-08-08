@@ -95,7 +95,7 @@
       {% set match = fixture.match %}
       {% set home, away = match.split(' vs ') %}
       <div class="fixture-box">
-        <div class="fixture-match" onclick="toggleTooltip(this)">
+        <div class="fixture-match">
           <img src="{{ url_for('static', filename='team_logo/' + (home | lower | replace(' ', '_')) + '.png') }}" alt="{{ home }}" class="team-logo" />
           <span>{{ home }}</span>
           <span class="vs">vs</span>
@@ -103,7 +103,7 @@
           <img src="{{ url_for('static', filename='team_logo/' + (away | lower | replace(' ', '_')) + '.png') }}" alt="{{ away }}" class="team-logo" />
           {% if fixture.stadium and fixture.stadium_info %}
           <div class="stadium-tooltip">
-            <img src="{{ url_for('static', filename='stadium_image/' + (fixture.stadium | replace(' ', '_')) + '.png') }}" alt="{{ fixture.stadium }}">
+            <img src="{{ url_for('stadium_image', filename=(fixture.stadium_info.name | replace(' ', '_')) + '.png') }}" alt="{{ fixture.stadium_info.name }}">
             <h4>🏟 {{ fixture.stadium_info.name }} – {{ fixture.stadium_info.club }}</h4>
             <ul>
               <li><strong>Pitch Size:</strong> {{ fixture.stadium_info.pitch_size }}</li>
@@ -167,19 +167,37 @@
     fixtures.forEach(fixture => {
       fixture.addEventListener('click', (e) => {
         if (e.target.closest('.stadium-tooltip')) return;
-        fixture.classList.toggle('active');
+        const tooltip = fixture.querySelector('.stadium-tooltip');
+        if (tooltip) {
+          tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
+          console.log('Tooltip toggled for:', fixture.querySelector('span').textContent);
+        }
         fixtures.forEach(other => {
           if (other !== fixture) {
-            other.classList.remove('active');
+            const otherTooltip = other.querySelector('.stadium-tooltip');
+            if (otherTooltip) otherTooltip.style.display = 'none';
           }
         });
       });
     });
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.fixture-match')) {
-        fixtures.forEach(fixture => fixture.classList.remove('active'));
+        fixtures.forEach(fixture => {
+          const tooltip = fixture.querySelector('.stadium-tooltip');
+          if (tooltip) tooltip.style.display = 'none';
+        });
       }
     });
+  });
+</script>
+
+<!-- Navigation Debug -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const leaderboardLink = document.querySelector('.leaderboard-button');
+    const newsLink = document.querySelector('.news-button');
+    leaderboardLink.addEventListener('click', () => console.log('Leaderboard link clicked'));
+    newsLink.addEventListener('click', () => console.log('News link clicked'));
   });
 </script>
 
@@ -189,7 +207,10 @@
   document.addEventListener('DOMContentLoaded', () => {
     console.log('Chat script loaded');
     try {
-      const socket = io();
+      const socket = io('https://scorecast-m931.onrender.com', {
+        transports: ['websocket', 'polling'],
+        timeout: 10000
+      });
       const chatBox = document.getElementById('chat-box');
       const chatToggle = document.getElementById('chat-toggle');
       const chatContent = document.getElementById('chat-content');
@@ -206,12 +227,9 @@
 
       chatToggle.addEventListener('click', () => {
         console.log('Toggle clicked, display:', chatContent.style.display);
-        if (chatContent.style.display === 'block' || chatContent.style.display === '') {
-          chatContent.style.display = 'none';
-          chatToggle.textContent = '💬 Chat';
-        } else {
-          chatContent.style.display = 'block';
-          chatToggle.textContent = '❌ Close';
+        chatContent.style.display = chatContent.style.display === 'block' ? 'none' : 'block';
+        chatToggle.textContent = chatContent.style.display === 'block' ? '❌ Close' : '💬 Chat';
+        if (chatContent.style.display === 'block') {
           chatMessages.scrollTop = chatMessages.scrollHeight;
         }
       });
@@ -234,13 +252,14 @@
         console.log('Form submitted');
         const message = messageInput.value.trim();
         if (message) {
-          socket.emit('send_message', { message });
+          socket.emit('send_message', { message, username: '{{ username }}' });
           messageInput.value = '';
         }
       });
 
       socket.on('connect', () => console.log('SocketIO connected'));
       socket.on('connect_error', (err) => console.error('SocketIO error:', err));
+      socket.on('disconnect', () => console.log('SocketIO disconnected'));
     } catch (err) {
       console.error('Chat script error:', err);
     }
