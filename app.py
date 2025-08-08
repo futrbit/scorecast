@@ -3,9 +3,14 @@ from flask_socketio import SocketIO
 from datetime import datetime, timedelta
 import json
 import os
+from dotenv import load_dotenv
+load_dotenv()
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "adminpass123")
 import copy
 from werkzeug.security import generate_password_hash, check_password_hash
 from chat import init_chat, socketio  # Import SocketIO and chat logic
+import eventlet
+eventlet.monkey_patch()
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Secure random key
