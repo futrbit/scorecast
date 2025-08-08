@@ -1,0 +1,57 @@
+<!-- templates/chat.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scorecast Chat - K3NN Predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_futuristic.css') }}" />
+</head>
+<body>
+  <header>
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Scorecast Logo" class="logo">
+    <div class="banner">Cyberpunk Football Banter</div>
+  </header>
+  <main>
+    <div class="chat-container">
+      <h2>💬 Scorecast Chat Room</h2>
+      <div id="chat-messages"></div>
+      <form id="chat-form">
+        <input type="text" id="message-input" placeholder="Type your banter..." required>
+        <button type="submit">🚀 Send</button>
+      </form>
+    </div>
+  </main>
+  <footer>
+    <p>Contact: <a href="mailto:support@machinadaily.com">support@machinadaily.com</a></p>
+  </footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+
+    socket.on('receive_message', (data) => {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('chat-message');
+      messageDiv.innerHTML = `
+        <span class="chat-username">${data.username}</span>
+        <span class="chat-timestamp">[${data.timestamp}]</span>
+        <p>${data.message}</p>
+      `;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (message) {
+        socket.emit('send_message', { message });
+        messageInput.value = '';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+[
+  {
+    "match": "Liverpool FC vs Bournemouth",
+    "date": "2025-08-15",
+    "time": "20:00",
+    "order": 1
+  },
+  {
+    "match": "Aston Villa vs Newcastle United",
+    "date": "2025-08-16",
+    "time": "12:00",
+    "order": 2
+  },
+  {
+    "match": "Brighton vs Fulham",
+    "date": "2025-08-16",
+    "time": "15:00",
+    "order": 3
+  },
+  {
+    "match": "Nottingham Forest vs Brentford",
+    "date": "2025-08-16",
+    "time": "15:00",
+    "order": 4
+  },
+  {
+    "match": "Sunderland vs West Ham United",
+    "date": "2025-08-16",
+    "time": "15:00",
+    "order": 5
+  },
+  {
+    "match": "Spurs vs Burnley",
+    "date": "2025-08-16",
+    "time": "15:00",
+    "order": 6
+  },
+  {
+    "match": "Wolves vs Manchester City",
+    "date": "2025-08-16",
+    "time": "17:30",
+    "order": 7
+  },
+  {
+    "match": "Chelsea vs Crystal Palace",
+    "date": "2025-08-17",
+    "time": "16:00",
+    "order": 8
+  },
+  {
+    "match": "Manchester United vs Arsenal",
+    "date": "2025-08-17",
+    "time": "16:00",
+    "order": 9
+  },
+  {
+    "match": "Leeds United vs Everton",
+    "date": "2025-08-18",
+    "time": "20:00",
+    "order": 10
+  }
+]

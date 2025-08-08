@@ -1,0 +1,46 @@
+{
+  "k3ndo": {
+    "1": {
+      "Arsenal vs Burnley": {
+        "home": 1,
+        "away": 1
+      },
+      "Sunderland vs Liverpool FC": {
+        "home": 1,
+        "away": 1
+      },
+      "Leeds United vs Brighton": {
+        "home": 1,
+        "away": 1
+      },
+      "Manchester United vs Nottingham Forest": {
+        "home": 1,
+        "away": 1
+      },
+      "Aston Villa vs Everton": {
+        "home": 1,
+        "away": 1
+      },
+      "West Ham United vs Wolves": {
+        "home": 1,
+        "away": 1
+      },
+      "Newcastle United vs Fulham": {
+        "home": 1,
+        "away": 1
+      },
+      "Brentford vs Crystal Palace": {
+        "home": 1,
+        "away": 1
+      },
+      "Manchester City vs Bournemouth": {
+        "home": 1,
+        "away": 1
+      },
+      "Chelsea vs Spurs": {
+        "home": 1,
+        "away": 1
+      }
+    }
+  }
+}

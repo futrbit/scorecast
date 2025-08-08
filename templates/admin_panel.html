@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel - SCORECAST Predictor</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    .team-input {
+      cursor: grab;
+      display: inline-block;
+      width: 150px;
+      padding: 5px;
+      border: 1px dashed #555;
+      background: #fff;
+      margin: 0 5px 5px 0;
+    }
+    .team-input:hover {
+      background: #f8f9fa;
+    }
+    .team-input:active {
+      cursor: grabbing;
+    }
+    .match-pair {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px;
+    }
+    .match-pair span {
+      font-weight: bold;
+      color: #333;
+    }
+    .table td {
+      vertical-align: middle;
+    }
+    .w-150 {
+      width: 150px;
+    }
+  </style>
+</head>
+<body class="bg-dark text-light">
+  <div class="container mt-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="text-warning mb-3">Admin Panel</h2>
+      <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alert alert-info">
+          {% for category, message in messages %}
+            <p class="mb-0 {% if category == 'error' %}text-danger{% else %}text-success{% endif %}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" id="adminForm" onsubmit="logFormData()">
+      <!-- Settings -->
+      <div class="card bg-secondary text-light mb-4">
+        <div class="card-body">
+          <h4 class="text-warning mb-3">Settings</h4>
+          <div class="mb-3">
+            <label for="current_week" class="form-label">Current Week</label>
+            <input type="number" id="current_week" name="current_week" value="{{ form_data.get('current_week', current_week) }}" min="1" class="form-control bg-dark text-light border-warning" required />
+          </div>
+          <div class="mb-3">
+            <label for="prediction_deadline" class="form-label">Prediction Deadline (UTC)</label>
+            <input type="datetime-local" id="prediction_deadline" name="prediction_deadline"
+                   value="{{ form_data.get('prediction_deadline', prediction_deadline.strftime('%Y-%m-%dT%H:%M') if prediction_deadline else '') }}"
+                   class="form-control bg-dark text-light border-warning" />
+            <div class="form-text text-muted">Users cannot submit predictions after this deadline.</div>
+          </div>
+          <button type="submit" name="save_settings" value="1" class="btn btn-warning w-100">Save Settings</button>
+        </div>
+      </div>
+
+      <!-- Fixture Editor -->
+      <div class="card bg-secondary-dark text-light mb-4">
+        <div class="card-body">
+          <h4 class="text-white mb-3">Edit Fixtures for Week {{ current_week }}</h4>
+          <button type="button" onclick="addNewRow()" class="btn btn-secondary mb-3">Add Fixture</button>
+          <div class="table-responsive">
+            <table class="table table-dark table-bordered">
+              <thead class="bg-warning">
+                <tr>
+                  <th scope="col" class="w-150">Week</th>
+                  <th scope="col">Match (Drag to Reorder)</th>
+                  <th scope="col" class="w-150">Date</th>
+                  <th scope="col" class="w-150">Time (UTC)</th>
+                </tr>
+              </thead>
+              <tbody id="match-list">
+                {% for i in range(1, 11) %}
+                  {% set fixture = fixtures[i-1] if i <= fixtures|length else {} %}
+                  <tr class="match-row" data-id="{{ i }}">
+                    <td class="week-number">{{ current_week }}</td>
+                    <td>
+                      <div class="match-pair" data-id="{{ i }}">
+                        <div class="team-input" data-type="home">
+                          <input type="text" class="form-control d-inline-block w-150 bg-white text-dark" name="fixture_{{ i }}_home"
+                                 value="{{ form_data.get('fixture_' ~ i ~ '_home', fixture.get('match', ' vs ').split(' vs ')[0] if fixture else '') }}"
+                                 placeholder="Home Team" />
+                        </div>
+                        <span>vs</span>
+                        <div class="team-input" data-type="away">
+                          <input type="text" class="form-control d-inline-block w-150 bg-white text-dark" name="fixture_{{ i }}_away"
+                                 value="{{ form_data.get('fixture_' ~ i ~ '_away', fixture.get('match', ' vs ').split(' vs ')[1] if fixture else '') }}"
+                                 placeholder="Away Team" />
+                        </div>
+                        <input type="hidden" class="order-input" name="fixture_{{ i }}_order"
+                               value="{{ form_data.get('fixture_' ~ i ~ '_order', fixture.get('order', i) if fixture else i) }}" />
+                      </div>
+                    </td>
+                    <td>
+                      <input type="date" class="form-control bg-dark text-light border-warning w-100" name="fixture_{{ i }}_date"
+                             value="{{ form_data.get('fixture_' ~ i ~ '_date', fixture.get('date', '') if fixture else '') }}" />
+                    </td>
+                    <td>
+                      <input type="time" class="form-control bg-dark text-light border-warning w-100" name="fixture_{{ i }}_time"
+                             value="{{ form_data.get('fixture_' ~ i ~ '_time', fixture.get('time', '') if fixture else '') }}" />
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <button type="submit" name="update_fixtures" value="1" class="btn btn-primary w-100 mt-3">Update Fixtures</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actual Scores -->
+      <div class="card bg-secondary-dark mb-4">
+        <div class="card-body text-light">
+          <h4 class="text-white mb-3">Enter Actual Scores for Week {{ current_week }}</h4>
+          <div class="table-responsive mt-3">
+            <table class="table table-dark">
+              <thead>
+                <tr>
+                  <th scope="col">Match</th>
+                  <th scope="col" class="w-50">Home Score</th>
+                  <th scope="col" class="w-50">Away Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for fixture in fixtures %}
+                  {% set match = fixture.get('match', ' ') %}
+                  <tr>
+                    <td>{{ match }}</td>
+                    <td>
+                      <input type="number" min="0" name="{{ match.replace(' ', '_').replace('-', '_').replace('.', '_') }}_home"
+                             value="{{ form_data.get(match.replace(' ', '_').replace('-', '_').replace('.', '_') ~ '_home', actuals.get(match, {}).get('home', '')) }}"
+                             class="form-control bg-dark text-light border-warning w-100" />
+                    </td>
+                    <td>
+                      <input type="number" min="0" name="{{ match.replace(' ', '_').replace('-', '_').replace('.', '_') }}_away"
+                             value="{{ form_data.get(match.replace(' ', '_').replace('-', '_').replace('.', '_') ~ '_away', actuals.get(match, {}).get('away', '')) }}"
+                             class="form-control bg-dark text-light border-warning w-100" />
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <button type="submit" name="update_results" value="1" class="btn btn-primary w-100 mt-3">Save Scores</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset Season -->
+      <div class="card bg-danger text-light mb-5">
+        <div class="card-body text-center">
+          <h5 class="mb-3 text-warning">⚠️ Danger Zone</h5>
+          <p class="text-light">This will delete all users, predictions, scores, results, and fixtures. This cannot be undone.</p>
+          <button type="submit" name="reset_data" value="1" class="btn btn-outline-light">Reset Season Data</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Initialize Sortable on each .match-pair container
+    const matchPairs = document.querySelectorAll('.match-pair');
+    matchPairs.forEach((matchPair, index) => {
+      new Sortable(matchPair, {
+        animation: 150,
+        ghostClass: 'bg-warning',
+        handle: '.team-input',
+        group: 'teams',
+        onEnd: function(evt) {
+          console.log('Dragged from:', evt.oldIndex, 'to:', evt.newIndex, 'in match pair:', evt.to.dataset.id);
+          matchPairs.forEach((match, idx) => {
+            const orderInput = match.querySelector('.order-input');
+            orderInput.value = idx + 1;
+            const homeInput = match.querySelector('input[name$="_home"]').value;
+            const awayInput = match.querySelector('input[name$="_away"]').value;
+            console.log(`Match ${idx + 1}: ${homeInput} vs ${awayInput}`);
+          });
+          const rows = document.querySelectorAll('.match-row');
+          rows.forEach((row) => {
+            row.querySelector('.week-number').textContent = {{ current_week }};
+          });
+        }
+      });
+    });
+
+    // Add new fixture row
+    function addNewRow() {
+      const tbody = document.getElementById('match-list');
+      const newId = tbody.querySelectorAll('.match-row').length + 1;
+      const row = `
+        <tr class="match-row" data-id="${newId}">
+          <td class="week-number">{{ current_week }}</td>
+          <td>
+            <div class="match-pair" data-id="${newId}">
+              <div class="team-input" data-type="home">
+                <input type="text" class="form-control d-inline-block w-150 bg-white text-dark" name="fixture_${newId}_home" placeholder="Home Team" />
+              </div>
+              <span>vs</span>
+              <div class="team-input" data-type="away">
+                <input type="text" class="form-control d-inline-block w-150 bg-white text-dark" name="fixture_${newId}_away" placeholder="Away Team" />
+              </div>
+              <input type="hidden" class="order-input" name="fixture_${newId}_order" value="${newId}" />
+            </div>
+          </td>
+          <td><input type="date" class="form-control bg-dark text-light border-warning w-100" name="fixture_${newId}_date" /></td>
+          <td><input type="time" class="form-control bg-dark text-light border-warning w-100" name="fixture_${newId}_time" /></td>
+        </tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+      const newMatchPair = tbody.querySelector(`.match-pair[data-id="${newId}"]`);
+      new Sortable(newMatchPair, {
+        animation: 150,
+        ghostClass: 'bg-warning',
+        handle: '.team-input',
+        group: 'teams',
+        onEnd: function(evt) {
+          const matchPairs = document.querySelectorAll('.match-pair');
+          matchPairs.forEach((match, idx) => {
+            const orderInput = match.querySelector('.order-input');
+            orderInput.value = idx + 1;
+            const homeInput = match.querySelector('input[name$="_home"]').value;
+            const awayInput = match.querySelector('input[name$="_away"]').value;
+            console.log(`Match ${idx + 1}: ${homeInput} vs ${awayInput}`);
+          });
+          const rows = document.querySelectorAll('.match-row');
+          rows.forEach((row) => {
+            row.querySelector('.week-number').textContent = {{ current_week }};
+          });
+        }
+      });
+    }
+
+    // Debug form submission
+    function logFormData() {
+      const form = document.getElementById('adminForm');
+      const formData = new FormData(form);
+      console.log('Form data on submit:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+    }
+  </script>
+</body>
+</html>

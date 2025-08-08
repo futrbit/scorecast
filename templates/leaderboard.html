@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🏆 Leaderboard - K3NN</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_futuristic.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+ <header>
+    <img src="/static/images/logo.png" alt="Scorecast Logo" class="logo">
+    <div class="banner">Cyberpunk Football Predictions</div>
+</header>
+
+  <main class="container" style="max-width: 1100px; margin: 3rem auto;">
+
+    <h2 class="text-center" style="margin-bottom: 2rem;">🏆 Leaderboard</h2>
+
+    <!-- Leaderboard table in neon box -->
+    <div class="weekly-scores">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Group</th>
+            <th>Total Points</th>
+            {% if show_weekly %}
+              {% for week in weeks %}
+                <th>W{{ week }}</th>
+              {% endfor %}
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for user, data in users %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ user }}</td>
+              <td>{{ data.group }}</td>
+              <td><strong>{{ data.points }}</strong></td>
+              {% if show_weekly %}
+                {% for week in weeks %}
+                  <td>{{ data.points_by_week[week] if data.points_by_week and week in data.points_by_week else '—' }}</td>
+                {% endfor %}
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Charts row -->
+    <div class="row mt-5">
+      <div class="col-md-12 mb-5">
+        <h4 class="text-center">📈 Weekly Points Progress</h4>
+        <canvas id="lineChart" height="150" style="background: #000;"></canvas>
+      </div>
+      <div class="col-md-12">
+        <h4 class="text-center">📊 Total Points by User</h4>
+        <canvas id="barChart" height="150" style="background: #000;"></canvas>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <a href="{{ url_for('profile') }}" class="btn" style="background:#00ffcc; color:#000; font-family:'Press Start 2P'; padding:1rem 2rem; border-radius:10px; box-shadow:0 0 10px #00ffcc;">⬅ Back to Profile</a>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Contact: <a href="mailto:contact@machinadaily.com">contact@machinadaily.com</a></p>
+  </footer>
+
+  <script>
+    const usersData = {{ users|tojson }};
+    const weeks = {{ weeks|tojson }};
+
+    const lineLabels = weeks.map(w => 'W' + w);
+    const lineDatasets = [];
+
+    usersData.forEach(([username, data], idx) => {
+      const pointsByWeek = data.points_by_week || {};
+      const dataPoints = weeks.map(w => pointsByWeek[w] || 0);
+
+      lineDatasets.push({
+        label: username,
+        data: dataPoints,
+        borderColor: hsl(${idx * 40 % 360}, 70%, 50%),
+        backgroundColor: hsla(${idx * 40 % 360}, 70%, 50%, 0.3),
+        fill: false,
+        tension: 0.3,
+        pointRadius: 4,
+      });
+    });
+
+    const barLabels = usersData.map(u => u[0]);
+    const barDataPoints = usersData.map(u => u[1].points || 0);
+    const barColors = barLabels.map((_, idx) => hsl(${idx * 40 % 360}, 70%, 50%));
+
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+    new Chart(ctxLine, {
+      type: 'line',
+      data: {
+        labels: lineLabels,
+        datasets: lineDatasets,
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true, precision: 0 },
+        },
+      },
+    });
+
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: barLabels,
+        datasets: [{
+          label: 'Total Points',
+          data: barDataPoints,
+          backgroundColor: barColors,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true, precision: 0 },
+        },
+      },
+    });
+  </script>
+
+</body>
+</html>
+
+

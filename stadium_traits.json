@@ -1,0 +1,182 @@
+[
+  {
+    "name": "anfield",
+    "club": "Liverpool FC",
+    "pitch_size": "101m × 68m",
+    "capacity": "53,394",
+    "weather": "Rainy ⚡",
+    "crowd": "Roaring 🔊",
+    "trait": "Echo Chamber – boosts home team stamina in 2nd half"
+  },
+  {
+    "name": "Etihad Stadium",
+    "club": "Manchester City",
+    "pitch_size": "105m × 68m",
+    "capacity": "53,500",
+    "weather": "Clear ☀️",
+    "crowd": "Clinical 👓",
+    "trait": "Tactical Grid – enhances passing accuracy by 10%"
+  },
+  {
+    "name": "Old Trafford",
+    "club": "Manchester United",
+    "pitch_size": "105m × 68m",
+    "capacity": "74,310",
+    "weather": "Foggy 🌫",
+    "crowd": "Historic 🏟",
+    "trait": "The Theatre – pressure increases on away attackers"
+  },
+  {
+    "name": "Emirates Stadium",
+    "club": "Arsenal",
+    "pitch_size": "105m × 68m",
+    "capacity": "60,704",
+    "weather": "Mild ☁️",
+    "crowd": "Sophisticated 🎓",
+    "trait": "Artillery Barrage – boosts home shots from outside the box"
+  },
+  {
+    "name": "Stamford Bridge",
+    "club": "Chelsea",
+    "pitch_size": "103m × 67m",
+    "capacity": "40,343",
+    "weather": "Windy 💨",
+    "crowd": "Edgy ⚔️",
+    "trait": "Blue Wall – increases home defense reaction speed"
+  },
+  {
+    "name": "Tottenham Hotspur Stadium",
+    "club": "Spurs",
+    "pitch_size": "105m × 68m",
+    "capacity": "62,850",
+    "weather": "Bright ☀️",
+    "crowd": "Anticipating 🤞",
+    "trait": "White Flash – adds speed boost to wing play"
+  },
+  {
+    "name": "St. James' Park",
+    "club": "Newcastle United",
+    "pitch_size": "105m × 68m",
+    "capacity": "52,305",
+    "weather": "Overcast 🌥",
+    "crowd": "Electric ⚡",
+    "trait": "Northern Roar – doubles pressing intensity in final 10 mins"
+  },
+  {
+    "name": "Villa Park",
+    "club": "Aston Villa",
+    "pitch_size": "105m × 68m",
+    "capacity": "42,682",
+    "weather": "Rainy 🌧",
+    "crowd": "Proud 🦁",
+    "trait": "Lions' Den – home striker gets one extra chance per half"
+  },
+  {
+    "name": "Goodison Park",
+    "club": "Everton",
+    "pitch_size": "100m × 68m",
+    "capacity": "39,414",
+    "weather": "Wet 🌧",
+    "crowd": "Gritty 💪",
+    "trait": "Tough Turf – reduces opponent midfield effectiveness"
+  },
+  {
+    "name": "London Stadium",
+    "club": "West Ham United",
+    "pitch_size": "105m × 68m",
+    "capacity": "60,000",
+    "weather": "Gloomy 🌁",
+    "crowd": "Vocal 📣",
+    "trait": "Hammer Time – boosts headers and set piece power"
+  },
+  {
+    "name": "Molineux",
+    "club": "Wolves",
+    "pitch_size": "100m × 64m",
+    "capacity": "31,750",
+    "weather": "Windy 🌬",
+    "crowd": "Snarling 🐺",
+    "trait": "Lunar Howl – home wingers move 15% faster"
+  },
+  {
+    "name": "Selhurst Park",
+    "club": "Crystal Palace",
+    "pitch_size": "100m × 68m",
+    "capacity": "25,456",
+    "weather": "Foggy 🌫",
+    "crowd": "Chaotic 🎉",
+    "trait": "Eagle Swoop – sudden boost in counters after 60'"
+  },
+  {
+    "name": "Elland Road",
+    "club": "Leeds United",
+    "pitch_size": "100m × 68m",
+    "capacity": "37,792",
+    "weather": "Rainy 🌧",
+    "crowd": "Rowdy 🎤",
+    "trait": "Marching On – stamina doesn't drop in 2nd half"
+  },
+  {
+    "name": "Turf Moor",
+    "club": "Burnley",
+    "pitch_size": "100m × 66m",
+    "capacity": "21,944",
+    "weather": "Snowy ❄️",
+    "crowd": "Icy 🧊",
+    "trait": "Frozen Fortress – slows down opposition build-up"
+  },
+  {
+    "name": "Vitality Stadium",
+    "club": "Bournemouth",
+    "pitch_size": "100m × 65m",
+    "capacity": "11,379",
+    "weather": "Clear 🌤",
+    "crowd": "Cozy 🧣",
+    "trait": "Small But Mighty – boosts home morale when trailing"
+  },
+  {
+    "name": "Brentford Community Stadium",
+    "club": "Brentford",
+    "pitch_size": "105m × 68m",
+    "capacity": "17,250",
+    "weather": "Partly Cloudy 🌥",
+    "crowd": "Buzzing 🐝",
+    "trait": "Bee Swarm – increases home possession pressure"
+  },
+  {
+    "name": "Craven Cottage",
+    "club": "Fulham",
+    "pitch_size": "101m × 67m",
+    "capacity": "32,312",
+    "weather": "Mild 🌤",
+    "crowd": "Royal 👑",
+    "trait": "hot Tactics – chance of a random surprise goal"
+  },
+  {
+     "name": "Brighton Stadium",
+  "club": "Brighton",
+  "pitch_size": "105m × 68m",
+  "capacity": "31,800",
+  "weather": "Breezy 🌬️",
+  "crowd": "Passionate 🔵⚪",
+  "trait": "Seagull Spirit – boosts team stamina in second half"
+  },
+  {
+    "name": "The City Ground",
+    "club": "Nottingham Forest",
+    "pitch_size": "100m × 68m",
+    "capacity": "30,445",
+    "weather": "Foggy 🌫",
+    "crowd": "Loyal 🌲",
+    "trait": "Forest Spirit – home side gains 1 bonus recovery per half"
+  },
+  {
+    "name": "Stadium of Light",
+    "club": "Sunderland",
+    "pitch_size": "105m × 68m",
+    "capacity": "49,000",
+    "weather": "Windy 💨",
+    "crowd": "Unified 🔥",
+    "trait": "Beacon Boost – goal chance increases during final 5 mins"
+  }
+]

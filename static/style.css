@@ -1,0 +1,274 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f0f0f0; /* White background */
+    color: #222;
+}
+
+header {
+    background-color: #1f1f1f;
+    color: rgb(233, 227, 227);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.banner {
+    font-size: 1rem;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+main {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5rem;
+}
+
+/* Fixtures Section - Red Theme */
+.fixtures {
+    background: linear-gradient(135deg, #09900c 0%, #780408 100%);
+    padding: 2rem 2.5rem;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 700px;
+    box-shadow: 0 8px 20px rgba(255, 77, 79, 0.4);
+    color: white;
+    font-weight: 600;
+}
+
+.fixture-box {
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.7rem;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: default;
+}
+
+.fixture-box:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.03);
+}
+
+/* Prediction Form */
+.prediction-form {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 15px;
+    max-width: 800px;
+    width: 100%;
+    box-shadow: 0 8px 20px rgba(168, 50, 50, 0.15);
+}
+
+.prediction-form h3 {
+    margin-top: 0;
+    color: #a83232; /* deep red for heading */
+    text-align: center;
+}
+
+.prediction-form table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background-color: #ff4d4f; /* red background for the whole table */
+    color: white; /* white text */
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.prediction-form th, .prediction-form td {
+    padding: 0.6rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+
+.prediction-form th {
+    background-color: #a5282f; /* darker red header */
+    font-weight: 700;
+}
+
+.prediction-form tr:nth-child(even) {
+    background-color: #d9363e; /* lighter red */
+}
+
+.prediction-form tr:nth-child(odd) {
+    background-color: #ff4d4f; /* base red */
+}
+
+.prediction-form input[type="number"] {
+    width: 60px;
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid #a5282f; /* dark red border */
+    text-align: center;
+    background-color: #fff;
+    color: #a5282f;
+}
+
+.prediction-form input[type="number"]:focus {
+    border-color: #d9363e;
+    outline: none;
+}
+
+.prediction-form button {
+    margin-top: 1.5rem;
+    background-color: #d9363e;
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.prediction-form button:hover {
+    background-color: #a5282f;
+}
+
+/* Weekly Scores */
+.weekly-scores {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.weekly-scores h3 {
+    margin-top: 0;
+    color: #333;
+    text-align: center;
+    font-weight: 700;
+}
+
+.weekly-scores table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.weekly-scores th, .weekly-scores td {
+    padding: 0.7rem;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    font-size: 1rem;
+}
+
+.weekly-scores tr:nth-child(even) {
+    background-color: #f8f8f8;
+}
+
+/* Login Box - Red Theme */
+.login-box {
+    background-color: #fff0f0; /* very light red/pinkish background */
+    padding: 2rem 2.5rem;
+    border-radius: 15px;
+    width: 320px;
+    box-shadow: 0 10px 25px rgba(77, 255, 116, 0.3);
+    transition: box-shadow 0.3s ease;
+}
+
+.login-box:hover {
+    box-shadow: 0 15px 40px rgba(73, 214, 78, 0.5);
+}
+
+.login-box h2 {
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    color: #49b25c; /* deep red */
+    text-align: center;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 0.7rem;
+    margin: 0.5rem 0 1.2rem 0;
+    border: 2px solid #5ab743; /* bright red border */
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    background-color: #ffffff;
+    color: #1a0d0e;
+}
+
+.login-box input:focus {
+    border-color: #1b0b0c; /* darker red on focus */
+    outline: none;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 0.8rem;
+    background: #d52222; /* bright red */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.login-box button:hover {
+    background: #a5282f; /* darker red on hover */
+}
+
+
+/* News Section - Red Theme */
+.news {
+    background-color: #0e810c; /* bright red background */
+    padding: 2rem 2.5rem;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 700px;
+    box-shadow: 0 5px 15px rgba(255, 77, 79, 0.4);
+    color: white;
+}
+
+.news h2 {
+    margin-top: 0;
+    font-weight: 700;
+    color: white;
+}
+
+.news-item {
+    margin-bottom: 0.7rem;
+    font-size: 1rem;
+    color: #fff3f3; /* lighter red/pinkish text */
+}
+
+/* Flash Messages */
+.messages {
+    padding: 1rem 2rem;
+    background-color: #fffbe6;
+    border-left: 5px solid #ffc107;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Footer */
+footer {
+    background-color: #1f1f1f;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    margin-top: 3rem;
+    font-size: 0.9rem;
+    user-select: none;
+}

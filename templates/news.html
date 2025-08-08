@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SCORECAST Predictor - News</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_futuristic.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: 'Press Start 2P', monospace;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 1rem;
+      background: #222;
+      border-bottom: 1px solid #333;
+    }
+    .news {
+      margin: 2rem auto;
+      background: #222;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 10px #000;
+      color: #eee;
+      max-width: 800px;
+    }
+    .news-item {
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    a {
+      color: #e63946;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      margin-top: 3rem;
+      padding: 1rem 0;
+      text-align: center;
+      color: #555;
+      font-size: 0.75rem;
+      border-top: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/static/images/logo.png" alt="Scorecast Logo" class="logo">
+    <div class="banner">Cyberpunk Football News</div>
+  </header>
+  <main>
+    <section class="news">
+      <h2>🗞 All Football Intel</h2>
+      {% if news %}
+          {% for article in news %}
+          <div class="news-item">
+              <a href="{{ article.link }}" target="_blank">{{ article.title }}</a>
+              <p>{{ article.date }} | Source: {{ article.source }}</p>
+          </div>
+          {% endfor %}
+      {% else %}
+          <p>No news available right now. Check back later!</p>
+      {% endif %}
+    </section>
+  </main>
+  <footer>
+    Contact: <a href="mailto:contact@machinadaily.com">contact@machinadaily.com</a><br />
+    © 2025 Machina Daily. All rights reserved.
+  </footer>
+</body>
+</html>

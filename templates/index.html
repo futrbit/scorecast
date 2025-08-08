@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SCORECAST Predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_futuristic.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    .fixture-box {
+      background: #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      padding: 0.8rem 1rem;
+      box-shadow: 0 0 10px #00ffcc33;
+      color: #eee;
+      text-align: center;
+    }
+
+    .fixture-teams {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      justify-items: center;
+      gap: 1.5rem;
+      font-weight: bold;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .fixture-teams img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 0.3rem;
+    }
+
+    .vs-text {
+      font-size: 0.9rem;
+      color: #00ffff;
+      text-shadow: 0 0 5px #00ffff, 0 0 15px #00ffff;
+      animation: flicker 1.5s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0% { opacity: 0.8; text-shadow: 0 0 5px #0ff, 0 0 10px #0ff; }
+      100% { opacity: 1; text-shadow: 0 0 10px #0ff, 0 0 20px #0ff; }
+    }
+
+    .fixture-date {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+
+    .deadline-box {
+      background: #333;
+      border-radius: 8px;
+      color: #e63946;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+      font-family: 'Press Start 2P', monospace;
+      text-align: center;
+      box-shadow: 0 0 15px #e63946;
+    }
+
+    .login-box {
+      background: #222;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 2rem 0;
+      box-shadow: 0 0 10px #000;
+      color: #eee;
+      max-width: 320px;
+    }
+
+    .login-box input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+      border: none;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 0.75rem;
+      font-family: 'Press Start 2P', monospace;
+      font-weight: bold;
+      background-color: #e63946;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .login-box button:hover {
+      background-color: #d62828;
+    }
+
+    .login-box p.register-link {
+      margin-top: 1rem;
+      text-align: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7rem;
+    }
+
+    .login-box p.register-link a {
+      color: #e63946;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .login-box p.register-link a:hover {
+      text-decoration: underline;
+    }
+
+    .news {
+      margin-top: 2rem;
+      background: #222;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 10px #000;
+      color: #eee;
+      max-width: 600px;
+    }
+
+    .news-item {
+      margin-bottom: 0.6rem;
+      font-size: 0.9rem;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding: 1rem 0;
+      text-align: center;
+      color: #555;
+      font-size: 0.75rem;
+      border-top: 1px solid #333;
+    }
+
+    a {
+      color: #e63946;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🌐 Header -->
+  <header>
+    <img src="/static/images/logo.png" alt="Scorecast Logo" class="logo">
+    <div class="banner">Cyberpunk Football Predictions</div>
+</header>
+
+  <main>
+
+    <!-- ⏰ Prediction Deadline Box -->
+    {% if deadline %}
+    <div class="deadline-box">
+      🕒 Prediction Deadline for Week {{ current_week }}:<br />
+      {{ deadline.strftime('%A, %d %B %Y at %H:%M') }}
+    </div>
+    {% endif %}
+
+    <!-- 🏟 Fixtures Section -->
+    <section class="fixtures prediction-form">
+      <h2>🛰 Matches In Play</h2>
+      {% for fixture in fixtures %}
+        {% set home, away = fixture.match.split(' vs ') %}
+        <div class="fixture-box">
+          <div class="fixture-teams">
+            <div>
+              <img src="{{ url_for('team_logo', filename=home|lower|replace(' ', '_') + '.png') }}" alt="{{ home }}">
+              {{ home }}
+            </div>
+            <div class="vs-text">vs</div>
+            <div>
+              <img src="{{ url_for('team_logo', filename=away|lower|replace(' ', '_') + '.png') }}" alt="{{ away }}">
+              {{ away }}
+            </div>
+          </div>
+          <div class="fixture-date">
+            {% if fixture.date_dt %}
+              📅 {{ fixture.date_dt.strftime('%A, %d %B %Y') }} at {{ fixture.date_dt.strftime('%H:%M') }}
+            {% else %}
+              Date unknown
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+
+    <!-- 🔐 Login Box -->
+    <section class="login-box">
+      <h2>🔐 Login</h2>
+      <form method="POST" action="{{ url_for('login') }}">
+        <input type="text" name="username" placeholder="Enter your name" required autocomplete="off" />
+        <button type="submit">Access The Grid</button>
+      </form>
+
+      <p class="register-link">
+        Don't have an account?
+        <a href="{{ url_for('register') }}">Register here</a>
+      </p>
+    </section>
+
+    <!-- 📰 News Section -->
+    <section class="news">
+  <h2>📰 Trending Football News</h2>
+  {% if news %}
+      {% for article in news %}
+      <div class="news-item">
+          <a href="{{ article.link }}" target="_blank">{{ article.title }}</a>
+          <p>{{ article.date }} | Source: {{ article.source }}</p>
+      </div>
+      {% endfor %}
+  {% else %}
+      <p>No news available right now. Check back later!</p>
+  {% endif %}
+</section>
+
+  </main>
+
+  <!-- 📩 Footer -->
+  <footer>
+    Contact: <a href="mailto:contact@machinadaily.com">contact@machinadaily.com</a><br />
+    &copy; 2025 Machina Daily. All rights reserved.
+  </footer>
+
+</body>
+</html>

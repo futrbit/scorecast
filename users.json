@@ -1,0 +1,25 @@
+{
+  "k3nn": {
+    "points": 0,
+    "group": "A",
+    "points_by_week": {
+      "1": 0
+    }
+  },
+  "k3ndo": {
+    "password": "scrypt:32768:8:1$ITNJTSM3UWJsA3wI$9253ea9c0085b4da3f14bd8de459b3fd73a5ebf679a42df8f1e24cc116fa14876d964fb1ceecd1a4a04679cd85e7f4cf331172523c2c9dac496f2c3be309747e",
+    "points": 20,
+    "group": "A",
+    "points_by_week": {
+      "1": 20
+    },
+    "character": "royal_mutant"
+  },
+  "mkmk": {
+    "password": "scrypt:32768:8:1$OIUKmR8S1CvBaYhD$662886dc02f4b2ccc94600e8ac855ed055936be4f156d3ebb5950a993aeb098b0d85ef3bc3255bbb13b82b6e598454f8e075c707e2c45497ce4715cb9f3ecc61",
+    "points": 0,
+    "group": "A",
+    "points_by_week": {},
+    "character": "carlos_hacker"
+  }
+}

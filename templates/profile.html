@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ username }}'s Profile - SCORECAST Predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_futuristic.css') }}" />
+</head>
+<body>
+
+<header>
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Scorecast Logo" class="logo">
+    <div class="banner">Cyberpunk Football Predictions</div>
+</header>
+
+<main>
+
+  <div class="user-info">
+    <h2>👤 Welcome, {{ username }}!</h2>
+    {% if prediction_deadline and now <= prediction_deadline %}
+    <p class="prediction-reminder">
+      <a href="#prediction-form">⏰ Don’t forget to add your score, dude! Deadline: {{ prediction_deadline.strftime('%Y-%m-%d %H:%M') }}</a>
+    </p>
+    {% endif %}
+    {% if user.character %}
+      <img src="{{ url_for('static', filename='characters/' + user.character + '.jpeg') }}" alt="Character" class="character-img" />
+    {% endif %}
+    <div class="dashboard-buttons">
+      <a href="{{ url_for('leaderboard') }}" class="leaderboard-button">📈 Leaderboard</a>
+      <a href="{{ url_for('news') }}" class="news-button">📰 News</a>
+      <div class="chat-box" id="chat-box">
+        <button class="chat-toggle" id="chat-toggle">💬 Chat</button>
+        <div class="chat-content" id="chat-content">
+          <h4>Scorecast Banter</h4>
+          <div class="chat-messages" id="chat-messages"></div>
+          <form class="chat-form" id="chat-form">
+            <input type="text" id="message-input" placeholder="Type your banter..." required>
+            <button type="submit">🚀</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <p>🧬 Group: {{ user.group }}</p>
+    <p>🌟 Total Points: {{ user.points }}</p>
+    <p>📅 Current Week: {{ current_week }}</p>
+
+    <div class="links">
+      <a href="{{ url_for('logout') }}">🔓 Logout</a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="messages">
+        <ul>
+          {% for category, message in messages %}
+            <li style="color: {% if category == 'error' %}red{% else %}lime{% endif %};">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% if user.points_by_week %}
+  <div class="weekly-scores">
+    <h3>📊 Your Weekly Scores</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for week, pts in user.points_by_week.items()|sort %}
+        <tr>
+          <td>{{ week }}</td>
+          <td>{{ pts }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="prediction-form" id="prediction-form">
+    <form method="post">
+      <h3>🧠 Week {{ current_week }} Predictions</h3>
+
+      {% if prediction_deadline %}
+      <p><em>⏳ Predictions close on: {{ prediction_deadline.strftime('%Y-%m-%d %H:%M') }}</em></p>
+      {% endif %}
+
+      {% for fixture in fixtures %}
+      {% set match = fixture.match %}
+      {% set home, away = match.split(' vs ') %}
+      <div class="fixture-box">
+        <div class="fixture-match" onclick="toggleTooltip(this)">
+          <img src="{{ url_for('static', filename='team_logo/' + (home | lower | replace(' ', '_')) + '.png') }}" alt="{{ home }}" class="team-logo" />
+          <span>{{ home }}</span>
+          <span class="vs">vs</span>
+          <span>{{ away }}</span>
+          <img src="{{ url_for('static', filename='team_logo/' + (away | lower | replace(' ', '_')) + '.png') }}" alt="{{ away }}" class="team-logo" />
+          {% if fixture.stadium and fixture.stadium_info %}
+          <div class="stadium-tooltip">
+            <img src="{{ url_for('static', filename='stadium_image/' + (fixture.stadium | replace(' ', '_')) + '.png') }}" alt="{{ fixture.stadium }}">
+            <h4>🏟 {{ fixture.stadium_info.name }} – {{ fixture.stadium_info.club }}</h4>
+            <ul>
+              <li><strong>Pitch Size:</strong> {{ fixture.stadium_info.pitch_size }}</li>
+              <li><strong>Capacity:</strong> {{ fixture.stadium_info.capacity }}</li>
+              <li><strong>Weather:</strong> {{ fixture.stadium_info.weather }}</li>
+              <li><strong>Crowd:</strong> {{ fixture.stadium_info.crowd }}</li>
+              <li><strong>Trait:</strong> <em>{{ fixture.stadium_info.trait }}</em></li>
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        <div class="prediction-inputs">
+          <span>Predict:</span>
+          <input type="number" min="0" name="{{ match.replace(' ', '_') }}_home"
+                 value="{{ predictions[match]['home'] if predictions and match in predictions else '' }}"
+                 {% if prediction_deadline and now > prediction_deadline %}disabled{% endif %} required>
+          <span class="vs-input">vs</span>
+          <input type="number" min="0" name="{{ match.replace(' ', '_') }}_away"
+                 value="{{ predictions[match]['away'] if predictions and match in predictions else '' }}"
+                 {% if prediction_deadline and now > prediction_deadline %}disabled{% endif %} required>
+          <span class="points">
+            Actual: {% if actuals and match in actuals %}
+                    {{ actuals[match]['home'] }} - {{ actuals[match]['away'] }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+          </span>
+        </div>
+        <span class="fixture-date">📅 {{ fixture.date }}</span>
+      </div>
+      {% endfor %}
+
+      {% if prediction_deadline and now > prediction_deadline %}
+      <p style="color: #e63946; font-weight: bold; margin-top: 1rem; text-align: center;">
+        ⚠️ Prediction deadline has passed. You cannot update predictions for this week.
+      </p>
+      {% else %}
+      <button type="submit">💾 Save Predictions</button>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if user.points_by_week and current_week in user.points_by_week %}
+  <div class="week-points">
+    <h4>🏁 Points earned this week: {{ user.points_by_week[current_week] }}</h4>
+  </div>
+  {% endif %}
+
+</main>
+
+<footer>
+  <p style="text-align: center; color: #555; font-size: 0.75rem; border-top: 1px solid #333; padding-top: 1rem;">
+    Contact: <a href="mailto:support@machinadaily.com" style="color: #e63946; text-decoration: none;">support@machinadaily.com</a>
+  </p>
+</footer>
+
+<script>
+  // Tooltip JavaScript
+  document.addEventListener('DOMContentLoaded', () => {
+    const fixtures = document.querySelectorAll('.fixture-match');
+    fixtures.forEach(fixture => {
+      fixture.addEventListener('click', (e) => {
+        if (e.target.closest('.stadium-tooltip')) return;
+        fixture.classList.toggle('active');
+        fixtures.forEach(other => {
+          if (other !== fixture) {
+            other.classList.remove('active');
+          }
+        });
+      });
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.fixture-match')) {
+        fixtures.forEach(fixture => fixture.classList.remove('active'));
+      }
+    });
+  });
+</script>
+
+<!-- SocketIO and Chat JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('Chat script loaded');
+    try {
+      const socket = io();
+      const chatBox = document.getElementById('chat-box');
+      const chatToggle = document.getElementById('chat-toggle');
+      const chatContent = document.getElementById('chat-content');
+      const chatMessages = document.getElementById('chat-messages');
+      const chatForm = document.getElementById('chat-form');
+      const messageInput = document.getElementById('message-input');
+
+      console.log('Elements:', { chatBox, chatToggle, chatContent, chatMessages, chatForm });
+
+      if (!chatToggle || !chatContent || !chatMessages || !chatForm) {
+        console.error('Missing chat elements');
+        return;
+      }
+
+      chatToggle.addEventListener('click', () => {
+        console.log('Toggle clicked, display:', chatContent.style.display);
+        if (chatContent.style.display === 'block' || chatContent.style.display === '') {
+          chatContent.style.display = 'none';
+          chatToggle.textContent = '💬 Chat';
+        } else {
+          chatContent.style.display = 'block';
+          chatToggle.textContent = '❌ Close';
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      });
+
+      socket.on('receive_message', (data) => {
+        console.log('Received:', data);
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('chat-message');
+        messageDiv.innerHTML = `
+          <span class="chat-username">${data.username}</span>
+          <span class="chat-timestamp">[${data.timestamp}]</span>
+          <p>${data.message}</p>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      });
+
+      chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        console.log('Form submitted');
+        const message = messageInput.value.trim();
+        if (message) {
+          socket.emit('send_message', { message });
+          messageInput.value = '';
+        }
+      });
+
+      socket.on('connect', () => console.log('SocketIO connected'));
+      socket.on('connect_error', (err) => console.error('SocketIO error:', err));
+    } catch (err) {
+      console.error('Chat script error:', err);
+    }
+  });
+</script>
+
+</body>
+</html>
