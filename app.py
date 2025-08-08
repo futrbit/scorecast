@@ -16,8 +16,15 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Secure random key
 app.permanent_session_lifetime = timedelta(days=5)
 
-# Initialize SocketIO
-init_chat(app)
+socketio.init_app(app)  # Explicitly initialize for gunicorn
+
+if __name__ == "__main__":
+    with app.app_context():
+        print("Registered routes:")
+        for rule in app.url_map.iter_rules():
+            print(f"[DEBUG] Endpoint: {rule.endpoint}, URL: {rule}")
+    port = int(os.getenv("PORT", 10000))  # Match Render's port for local testing
+    socketio.run(app, host="0.0.0.0", port=port, debug=True)
 
 # === Base directory for all data files ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -76,7 +83,7 @@ prediction_deadlines = load_data("deadlines.json", {
     "1": "2025-06-09T23:59",
     "2": "2025-06-19T23:59",
 })
-ADMIN_PASSWORD = "adminpass123"  # Consider securing this in production
+
 stadium_traits = load_data("stadium_traits.json", [])
 
 # === Helper to attach stadium info to fixtures ===
