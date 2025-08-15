@@ -39,7 +39,8 @@ socketio = SocketIO(app, async_mode='gevent')
 # Load data from the database or files
 # Note: This function is now a general utility for loading JSON files, not core data
 def load_json_file(filename):
-    filepath = os.path.join(BASE_DIR, 'data', filename)
+    # The fix: changed path to look in the project root directory
+    filepath = os.path.join(BASE_DIR, filename)
     try:
         with open(filepath, 'r') as f:
             return json.load(f)
@@ -146,6 +147,7 @@ def register():
         flash("Database not connected. Please contact the administrator.", "error")
         return redirect(url_for("index"))
         
+    # The fix: changed path to look in the project root directory
     characters_folder = os.path.join(BASE_DIR, 'static', 'characters')
     characters = []
     try:
