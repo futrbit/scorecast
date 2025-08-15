@@ -62,11 +62,11 @@ stadiums = load_static_json_file("stadium_traits.json")
 @app.route('/static/<path:filename>')
 def static_files(filename):
     """Serve all static files from the static directory."""
-    # This path is correct for Render's file structure where the static directory is at the root
-    filepath = os.path.join(BASE_DIR, 'static')
-    if not os.path.exists(filepath):
-        # Fallback for local testing if the static folder is in a 'src' subdirectory
-        filepath = os.path.join(BASE_DIR, 'src', 'static')
+    # Use the a robust path that is compatible with Render's file structure
+    static_folder = 'static'
+    filepath = os.path.join(os.path.abspath('.'), static_folder)
+    
+    print(f"[DEBUG] Attempting to serve static file from: {filepath}")
     
     if not os.path.exists(filepath):
         print(f"[ERROR] Static directory not found: {filepath}")
