@@ -6,6 +6,7 @@ from flask_socketio import SocketIO, emit
 from werkzeug.security import generate_password_hash, check_password_hash
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 # --- Firebase Initialization ---
 # IMPORTANT: Use environment variables for secure credential management.
@@ -14,7 +15,6 @@ db = None # Initialize db as None
 
 try:
     if firebase_key_string:
-        # Parse the JSON string into a dictionary
         firebase_key_dict = json.loads(firebase_key_string)
         cred = credentials.Certificate(firebase_key_dict)
         if not firebase_admin._apps:
@@ -26,21 +26,19 @@ try:
 except Exception as e:
     print(f"Error initializing Firebase from environment variable: {e}")
 
-# --- Global Constants and Data (now stored in Firestore) ---
+# --- Global Constants and Data ---
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "a_very_secret_key")
 
-# The fix: explicitly set the async mode to 'gevent'
 socketio = SocketIO(app, async_mode='gevent')
 
-# Load data from the database or files
-# Note: This function is now a general utility for loading JSON files, not core data
-def load_json_file(filename):
-    # The fix: changed path to look in the project root directory
-    filepath = os.path.join(BASE_DIR, filename)
+# --- Utility Function for Loading Local JSON Files ---
+def load_static_json_file(filename):
+    """Loads a static JSON file from the project's root directory."""
+    filepath = os.path.join(os.path.dirname(BASE_DIR), filename)
     try:
         with open(filepath, 'r') as f:
             return json.load(f)
@@ -48,25 +46,52 @@ def load_json_file(filename):
         print(f"[ERROR] Could not load {filepath}: {e}")
         return {}
 
-def save_json_file(filename, data):
-    filepath = os.path.join(BASE_DIR, 'data', filename)
+# Load static stadium data once on app startup
+# This data does not need to be in Firestore as it's not dynamic.
+stadiums = load_static_json_file("stadium_traits.json")
+
+
+# --- Utility Functions for Firestore Data Fetching ---
+
+def get_current_week_from_firestore():
+    """Fetches the current week from Firestore, defaults to 1."""
+    if not db: return 1
     try:
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=4)
-    except IOError as e:
-        print(f"[ERROR] Could not save {filepath}: {e}")
+        week_doc = db.collection('settings').document('state').get()
+        if week_doc.exists:
+            return week_doc.to_dict().get('current_week', 1)
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch current week from Firestore: {e}")
+    return 1
 
-# Load initial data from JSON files
-stadiums = load_json_file("stadiums.json")
-fixtures = load_json_file("fixtures.json")
-actual_results = load_json_file("actual_results.json")
-prediction_deadlines = load_json_file("deadlines.json")
-current_week = load_json_file("current_week.json").get("current_week", 1)
+def get_deadlines_from_firestore():
+    """Fetches prediction deadlines from Firestore."""
+    if not db: return {}
+    try:
+        deadlines_doc = db.collection('deadlines').document('all_deadlines').get()
+        if deadlines_doc.exists:
+            return deadlines_doc.to_dict().get('deadlines', {})
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch deadlines from Firestore: {e}")
+    return {}
+
+def get_actual_results_for_week(week):
+    """Fetches actual results for a specific week from Firestore."""
+    if not db: return {}
+    try:
+        results_doc = db.collection('actual_results').document(str(week)).get()
+        if results_doc.exists:
+            return results_doc.to_dict().get('results', {})
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch actual results for week {week}: {e}")
+    return {}
 
 
-# Utility Functions for Firestore
+# --- Utility Functions ---
+
 def update_user_points_for_week(username, week, new_points):
-    if not db: return # Add this check
+    """Updates a user's points in Firestore for a given week."""
+    if not db: return
     try:
         user_ref = db.collection('users').document(username)
         user_doc = user_ref.get()
@@ -84,14 +109,14 @@ def update_user_points_for_week(username, week, new_points):
         print(f"[ERROR] Failed to update user points: {e}")
 
 def update_all_user_points_for_week(week):
-    if not db: return # Add this check
+    """Recalculates points for all users for a specific week based on actual results."""
+    if not db: return
     try:
-        actuals = db.collection('actual_results').document(str(week)).get()
-        if not actuals.exists:
+        actual_week_data = get_actual_results_for_week(week)
+        if not actual_week_data:
             print(f"[INFO] No actual results for week {week}. Skipping point update.")
             return
 
-        actual_week_data = actuals.to_dict().get("results", {})
         users_stream = db.collection('users').stream()
 
         for user_doc in users_stream:
@@ -118,16 +143,18 @@ def update_all_user_points_for_week(week):
     except Exception as e:
         print(f"[ERROR] Failed to update all user points: {e}")
 
-
 def attach_stadium_info(fixtures_list):
+    """Adds stadium and city info to fixture objects using the globally loaded stadium data."""
     for fixture in fixtures_list:
         home_team = fixture['match'].split(" vs ")[0]
+        # Use the globally loaded 'stadiums' variable
         stadium_info = stadiums.get(home_team, {})
         fixture['stadium'] = stadium_info.get('stadium')
         fixture['city'] = stadium_info.get('city')
     return fixtures_list
 
 def parse_fixtures_dates(fixtures_list):
+    """Parses date and time strings into datetime objects."""
     for fixture in fixtures_list:
         try:
             fixture_datetime = datetime.strptime(f"{fixture['date']}T{fixture['time']}", "%Y-%m-%dT%H:%M")
@@ -147,8 +174,7 @@ def register():
         flash("Database not connected. Please contact the administrator.", "error")
         return redirect(url_for("index"))
         
-    # The fix: changed path to look in the project root directory
-    characters_folder = os.path.join(BASE_DIR, 'static', 'characters')
+    characters_folder = os.path.join(os.path.dirname(BASE_DIR), 'static', 'characters')
     characters = []
     try:
         character_files = [f for f in os.listdir(characters_folder) if f.lower().endswith(('.jpeg', '.jpg', '.png'))]
@@ -179,7 +205,6 @@ def register():
             return redirect(url_for("register"))
 
         try:
-            # Check if username already exists in Firestore
             user_ref = db.collection('users').document(username)
             if user_ref.get().exists:
                 flash("Username already taken. Please choose another.", "error")
@@ -195,7 +220,6 @@ def register():
 
         hashed_pw = generate_password_hash(password)
         
-        # Save user data to Firestore
         user_data = {
             "password": hashed_pw,
             "points": 0,
@@ -269,11 +293,23 @@ def profile():
     username = session["user"]
     now = datetime.utcnow()
     
-    # Load fixtures and deadlines from JSON files
-    global fixtures, prediction_deadlines, actual_results
-    fixtures_with_info = attach_stadium_info(fixtures)
-    fixtures_with_info = parse_fixtures_dates(fixtures_with_info)
-    
+    # Fetch all data from Firestore
+    current_week = get_current_week_from_firestore()
+    prediction_deadlines = get_deadlines_from_firestore()
+    actual_results = get_actual_results_for_week(current_week)
+
+    try:
+        fixtures_docs = db.collection('fixtures').where(filter=FieldFilter("week", "==", current_week)).stream()
+        fixtures_list = [doc.to_dict() for doc in fixtures_docs]
+        fixtures_list.sort(key=lambda x: x.get("order", float('inf')))
+
+        # Use the globally loaded 'stadiums' variable
+        fixtures_with_info = attach_stadium_info(fixtures_list)
+        fixtures_with_info = parse_fixtures_dates(fixtures_with_info)
+    except Exception as e:
+        print(f"[ERROR] Failed to load fixtures for profile: {e}")
+        fixtures_with_info = []
+
     deadline_str = prediction_deadlines.get(str(current_week))
     prediction_deadline = datetime.strptime(deadline_str, "%Y-%m-%dT%H:%M") if deadline_str else datetime.max
     
@@ -302,43 +338,18 @@ def profile():
                 if home_score and away_score and home_score.isdigit() and away_score.isdigit():
                     user_week_preds[match] = {"home": int(home_score), "away": int(away_score)}
             
-            # Save predictions to Firestore
             user_data["predictions"][str(current_week)] = user_week_preds
             db.collection('users').document(username).update({"predictions": user_data["predictions"]})
-
-            # Recalculate and save points
-            pts = 0
-            if str(current_week) in actual_results:
-                actual_week_data = actual_results.get(str(current_week), {})
-                for match, pred in user_week_preds.items():
-                    if match in actual_week_data:
-                        actual = actual_week_data[match]
-                        if pred['home'] == actual['home'] and pred['away'] == actual['away']:
-                            pts += 3
-                        elif (pred['home'] > pred['away'] and actual['home'] > actual['away']) or \
-                             (pred['home'] < pred['away'] and actual['home'] < actual['away']) or \
-                             (pred['home'] == pred['away'] and actual['home'] == actual['away']):
-                            pts += 1
             
-            user_data["points_by_week"].setdefault(str(current_week), 0)
-            user_data["points_by_week"][str(current_week)] = pts
-            user_data["points"] = sum(user_data["points_by_week"].values())
-            
-            db.collection('users').document(username).update({
-                "points_by_week": user_data["points_by_week"],
-                "points": user_data["points"]
-            })
-            
-            flash(f"Predictions saved! You earned {pts} points this week.", "success")
+            flash(f"Predictions saved!", "success")
             return redirect(url_for("profile"))
 
     except Exception as e:
         flash(f"Error loading user data: {str(e)}", "error")
         return redirect(url_for("logout"))
 
-    actuals = actual_results.get(str(current_week), {})
     return render_template("profile.html", username=username, user=user_data,
-                           fixtures=fixtures_with_info, predictions=user_preds, actuals=actuals,
+                           fixtures=fixtures_with_info, predictions=user_preds, actuals=actual_results,
                            current_week=current_week, prediction_deadline=prediction_deadline, now=now)
 
 
@@ -348,6 +359,8 @@ def leaderboard():
         flash("Database not connected. Please contact the administrator.", "error")
         return redirect(url_for("index"))
         
+    current_week = get_current_week_from_firestore()
+
     try:
         users_stream = db.collection('users').stream()
         all_users = {doc.id: doc.to_dict() for doc in users_stream}
@@ -392,11 +405,12 @@ def admin_panel():
         flash("Admin login required.", "error")
         return redirect(url_for("admin"))
         
-    global current_week, fixtures, prediction_deadlines, actual_results
-    
+    # Fetch all data from Firestore
+    current_week = get_current_week_from_firestore()
+    prediction_deadlines = get_deadlines_from_firestore()
+
     if request.method == "POST":
         try:
-            # Update Settings
             if "save_settings" in request.form:
                 new_week = request.form.get("current_week")
                 if new_week and new_week.isdigit():
@@ -416,7 +430,6 @@ def admin_panel():
                     except ValueError:
                         flash("Invalid deadline format.", "error")
         
-            # Update Fixtures
             if "update_fixtures" in request.form:
                 updated_fixtures = []
                 i = 1
@@ -453,10 +466,11 @@ def admin_panel():
                 else:
                     flash("No valid fixtures provided.", "error")
         
-            # Update Scores
             if "update_results" in request.form:
+                fixtures_docs = db.collection('fixtures').where(filter=FieldFilter("week", "==", current_week)).stream()
+                fixtures_list = [doc.to_dict() for doc in fixtures_docs]
                 week_actuals = {}
-                for fixture in fixtures:
+                for fixture in fixtures_list:
                     match = fixture["match"]
                     home_key = match.replace(" ", "_").replace(".", "_") + "_home"
                     away_key = match.replace(" ", "_").replace("-", "_") + "_away"
@@ -485,28 +499,16 @@ def admin_panel():
         return redirect(url_for("admin_panel"))
 
     # GET: Render template
-    # Load data from Firestore for display
     try:
-        current_week_doc = db.collection('settings').document('state').get()
-        if current_week_doc.exists:
-            current_week = current_week_doc.to_dict().get('current_week', 1)
-
-        # Use firestore.FieldFilter directly
-        fixtures_docs = db.collection('fixtures').where(filter=firestore.FieldFilter("week", "==", current_week)).stream()
+        fixtures_docs = db.collection('fixtures').where(filter=FieldFilter("week", "==", current_week)).stream()
         fixtures_list = [doc.to_dict() for doc in fixtures_docs]
         fixtures_list.sort(key=lambda x: x.get("order", float('inf')))
 
-        actuals_doc = db.collection('actual_results').document(str(current_week)).get()
-        week_actuals = actuals_doc.to_dict().get('results', {}) if actuals_doc.exists else {}
-
-        deadlines_doc = db.collection('deadlines').document('all_deadlines').get()
-        prediction_deadlines = deadlines_doc.to_dict().get('deadlines', {}) if deadlines_doc.exists else {}
-
+        week_actuals = get_actual_results_for_week(current_week)
     except Exception as e:
         flash(f"Error loading admin data: {str(e)}", "error")
         fixtures_list = []
         week_actuals = {}
-        prediction_deadlines = {}
     
     deadline_str = prediction_deadlines.get(str(current_week))
     prediction_deadline = None
@@ -516,6 +518,7 @@ def admin_panel():
         except ValueError:
             flash("Invalid deadline format in data.", "error")
     
+    # Use the globally loaded 'stadiums' variable
     fixtures_with_info = attach_stadium_info(fixtures_list)
     fixtures_with_info = parse_fixtures_dates(fixtures_with_info)
 
