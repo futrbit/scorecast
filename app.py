@@ -6,8 +6,9 @@ from flask_socketio import SocketIO, emit
 from werkzeug.security import generate_password_hash, check_password_hash
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
-from google.cloud.firestore_v1.base_query import FieldFilter
-from google.cloud.firestore_v1.base_collection import CollectionReference
+# The following imports were removed due to a library update
+# from google.cloud.firestore_v1.base_query import FieldFilter
+# from google.cloud.firestore_v1.base_collection import CollectionReference
 
 # --- Firebase Initialization ---
 # IMPORTANT: Use environment variables for secure credential management.
@@ -491,7 +492,8 @@ def admin_panel():
         if current_week_doc.exists:
             current_week = current_week_doc.to_dict().get('current_week', 1)
 
-        fixtures_docs = db.collection('fixtures').where(filter=FieldFilter("week", "==", current_week)).stream()
+        # Use firestore.FieldFilter directly
+        fixtures_docs = db.collection('fixtures').where(filter=firestore.FieldFilter("week", "==", current_week)).stream()
         fixtures_list = [doc.to_dict() for doc in fixtures_docs]
         fixtures_list.sort(key=lambda x: x.get("order", float('inf')))
 
