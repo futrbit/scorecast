@@ -10,17 +10,23 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from google.cloud.firestore_v1.base_collection import CollectionReference
 
 # --- Firebase Initialization ---
-# IMPORTANT: Replace 'firebase_key.json' with the path to your downloaded key file.
+# IMPORTANT: Use environment variables for secure credential management.
+firebase_key_string = os.environ.get("FIREBASE_KEY")
+db = None # Initialize db as None
+
 try:
-    if not firebase_admin._apps:
-        cred = credentials.Certificate('firebase_key.json')
-        initialize_app(cred)
-    db = firestore.client()
+    if firebase_key_string:
+        # Parse the JSON string into a dictionary
+        firebase_key_dict = json.loads(firebase_key_string)
+        cred = credentials.Certificate(firebase_key_dict)
+        if not firebase_admin._apps:
+            initialize_app(cred)
+        db = firestore.client()
+        print("Firebase initialized successfully from environment variable.")
+    else:
+        print("FIREBASE_KEY environment variable not found. The app will not be able to connect to Firestore.")
 except Exception as e:
-    print(f"Error initializing Firebase: {e}")
-    # Fallback or error handling for when the key is not found
-    # For now, we will print an error and continue, but the app won't work correctly.
-    # In a production app, you might want to exit.
+    print(f"Error initializing Firebase from environment variable: {e}")
 
 # --- Global Constants and Data (now stored in Firestore) ---
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
@@ -61,6 +67,7 @@ current_week = load_json_file("current_week.json").get("current_week", 1)
 
 # Utility Functions for Firestore
 def update_user_points_for_week(username, week, new_points):
+    if not db: return # Add this check
     try:
         user_ref = db.collection('users').document(username)
         user_doc = user_ref.get()
@@ -78,6 +85,7 @@ def update_user_points_for_week(username, week, new_points):
         print(f"[ERROR] Failed to update user points: {e}")
 
 def update_all_user_points_for_week(week):
+    if not db: return # Add this check
     try:
         actuals = db.collection('actual_results').document(str(week)).get()
         if not actuals.exists:
@@ -136,6 +144,10 @@ def index():
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
+    if not db:
+        flash("Database not connected. Please contact the administrator.", "error")
+        return redirect(url_for("index"))
+        
     characters_folder = os.path.join(BASE_DIR, 'static', 'characters')
     characters = []
     try:
@@ -205,6 +217,10 @@ def register():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
+    if not db:
+        flash("Database not connected. Please contact the administrator.", "error")
+        return redirect(url_for("index"))
+        
     if request.method == "POST":
         username = request.form["username"].strip()
         password = request.form.get("password")
@@ -243,6 +259,10 @@ def logout():
 
 @app.route('/profile', methods=["GET", "POST"])
 def profile():
+    if not db:
+        flash("Database not connected. Please contact the administrator.", "error")
+        return redirect(url_for("index"))
+        
     if "user" not in session:
         return redirect(url_for("login"))
     
@@ -324,6 +344,10 @@ def profile():
 
 @app.route('/leaderboard')
 def leaderboard():
+    if not db:
+        flash("Database not connected. Please contact the administrator.", "error")
+        return redirect(url_for("index"))
+        
     try:
         users_stream = db.collection('users').stream()
         all_users = {doc.id: doc.to_dict() for doc in users_stream}
@@ -345,6 +369,10 @@ def leaderboard():
 
 @app.route('/admin', methods=["GET", "POST"])
 def admin():
+    if not db:
+        flash("Database not connected. Please contact the administrator.", "error")
+        return redirect(url_for("index"))
+        
     if request.method == "POST":
         password = request.form.get("password")
         if password != ADMIN_PASSWORD:
@@ -356,6 +384,10 @@ def admin():
 
 @app.route('/admin/panel', methods=["GET", "POST"])
 def admin_panel():
+    if not db:
+        flash("Database not connected. Please contact the administrator.", "error")
+        return redirect(url_for("index"))
+        
     if not session.get("admin"):
         flash("Admin login required.", "error")
         return redirect(url_for("admin"))
@@ -494,6 +526,10 @@ def admin_panel():
 
 @app.route('/admin/reset')
 def admin_reset():
+    if not db:
+        flash("Database not connected. Please contact the administrator.", "error")
+        return redirect(url_for("index"))
+        
     if not session.get("admin"):
         flash("Admin login required to perform reset.", "error")
         return redirect(url_for("admin"))
