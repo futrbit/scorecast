@@ -7,3 +7,4 @@ Werkzeug==2.3.6
 gunicorn==20.1.0
 chromedriver-autoinstaller==0.4.0
 eventlet==0.33.2
+dnspython==2.1.0
