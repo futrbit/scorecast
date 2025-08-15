@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
 from flask_socketio import SocketIO, emit
 from werkzeug.security import generate_password_hash, check_password_hash
 import firebase_admin
@@ -38,6 +38,7 @@ socketio = SocketIO(app, async_mode='gevent')
 # --- Utility Function for Loading Local JSON Files ---
 def load_static_json_file(filename):
     """Loads a static JSON file from the project's root directory."""
+    # This path is correct for Render's file structure where the project root is above the src directory
     filepath = os.path.join(os.path.dirname(BASE_DIR), filename)
     try:
         with open(filepath, 'r') as f:
@@ -50,6 +51,10 @@ def load_static_json_file(filename):
 # This data does not need to be in Firestore as it's not dynamic.
 stadiums = load_static_json_file("stadium_traits.json")
 
+# --- Route for serving team logos ---
+@app.route('/static/images/<path:filename>')
+def team_logo(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'static', 'images'), filename)
 
 # --- Utility Functions for Firestore Data Fetching ---
 
@@ -163,10 +168,22 @@ def parse_fixtures_dates(fixtures_list):
             fixture['datetime_obj'] = None
     return fixtures_list
 
+
 # --- ROUTES ---
 @app.route("/")
 def index():
     return render_template("index.html")
+    
+@app.route('/check_db')
+def check_db():
+    if not db:
+        return "Database not connected. Please check your environment variables.", 500
+    try:
+        # Attempt a simple query to verify connection
+        db.collection('settings').document('state').get()
+        return "Database connection successful! 🎉", 200
+    except Exception as e:
+        return f"Database connection failed: {e}", 500
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -174,17 +191,24 @@ def register():
         flash("Database not connected. Please contact the administrator.", "error")
         return redirect(url_for("index"))
         
-    characters_folder = os.path.join(os.path.dirname(BASE_DIR), 'static', 'characters')
+    characters_folder = os.path.join(BASE_DIR, 'static', 'characters')
     characters = []
     try:
-        character_files = [f for f in os.listdir(characters_folder) if f.lower().endswith(('.jpeg', '.jpg', '.png'))]
-        characters = [
-            {'id': i + 1, 'name': os.path.splitext(f)[0], 'image': f'characters/{f}'}
-            for i, f in enumerate(character_files)
-        ]
+        if os.path.exists(characters_folder):
+            character_files = [f for f in os.listdir(characters_folder) if f.lower().endswith(('.jpeg', '.jpg', '.png'))]
+            characters = [
+                {'id': i + 1, 'name': os.path.splitext(f)[0], 'image': f'characters/{f}'}
+                for i, f in enumerate(character_files)
+            ]
+        else:
+            print(f"[ERROR] Directory not found: {characters_folder}")
+            flash("Character images not found. Contact the administrator.", "error")
     except FileNotFoundError:
         flash("Character images not found. Contact the administrator.", "error")
         print(f"[ERROR] Directory not found: {characters_folder}")
+    except Exception as e:
+        print(f"[ERROR] Failed to load character images: {e}")
+        flash(f"Failed to load characters: {str(e)}", "error")
 
     if request.method == "POST":
         username = request.form["username"].strip()
@@ -211,6 +235,7 @@ def register():
                 return redirect(url_for("register"))
         except Exception as e:
             flash(f"Error checking user: {str(e)}", "error")
+            print(f"[ERROR] Firestore error checking for existing user: {e}")
             return redirect(url_for("register"))
 
         selected_character = next((c for c in characters if str(c['id']) == character_id), None)
@@ -235,6 +260,7 @@ def register():
             return redirect(url_for("login"))
         except Exception as e:
             flash(f"Error saving user data: {str(e)}", "error")
+            print(f"[ERROR] Firestore error saving user data: {e}")
             return redirect(url_for("register"))
 
     return render_template("register.html", characters=characters)
@@ -270,6 +296,7 @@ def login():
                 flash("Invalid username or password.", "error")
         except Exception as e:
             flash(f"Error logging in: {str(e)}", "error")
+            print(f"[ERROR] Firestore error during login: {e}")
             
     return render_template("login.html")
 
@@ -346,6 +373,7 @@ def profile():
 
     except Exception as e:
         flash(f"Error loading user data: {str(e)}", "error")
+        print(f"[ERROR] Firestore error loading user data: {e}")
         return redirect(url_for("logout"))
 
     return render_template("profile.html", username=username, user=user_data,
@@ -374,6 +402,7 @@ def leaderboard():
         
     except Exception as e:
         flash(f"Error loading leaderboard data: {str(e)}", "error")
+        print(f"[ERROR] Firestore error loading leaderboard data: {e}")
         sorted_users = []
         weeks = []
 
@@ -495,6 +524,7 @@ def admin_panel():
 
         except Exception as e:
             flash(f"Error processing form: {str(e)}", "error")
+            print(f"[ERROR] Firestore error processing form: {e}")
             
         return redirect(url_for("admin_panel"))
 
@@ -507,6 +537,7 @@ def admin_panel():
         week_actuals = get_actual_results_for_week(current_week)
     except Exception as e:
         flash(f"Error loading admin data: {str(e)}", "error")
+        print(f"[ERROR] Firestore error loading admin data: {e}")
         fixtures_list = []
         week_actuals = {}
     
@@ -549,6 +580,7 @@ def admin_reset():
         flash("All data has been reset. App is now in a clean state.", "success")
     except Exception as e:
         flash(f"Error during data reset: {str(e)}", "error")
+        print(f"[ERROR] Firestore error during data reset: {e}")
 
     return redirect(url_for("admin_panel"))
 
