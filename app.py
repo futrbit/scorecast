@@ -6,9 +6,6 @@ from flask_socketio import SocketIO, emit
 from werkzeug.security import generate_password_hash, check_password_hash
 import firebase_admin
 from firebase_admin import credentials, firestore, initialize_app
-# The following imports were removed due to a library update
-# from google.cloud.firestore_v1.base_query import FieldFilter
-# from google.cloud.firestore_v1.base_collection import CollectionReference
 
 # --- Firebase Initialization ---
 # IMPORTANT: Use environment variables for secure credential management.
@@ -32,12 +29,12 @@ except Exception as e:
 # --- Global Constants and Data (now stored in Firestore) ---
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Note: Data like users, predictions, etc., will no longer be stored in global variables.
-# They will be read from and written to Firestore on demand.
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "a_very_secret_key")
-socketio = SocketIO(app)
+
+# The fix: explicitly set the async mode to 'gevent'
+socketio = SocketIO(app, async_mode='gevent')
 
 # Load data from the database or files
 # Note: This function is now a general utility for loading JSON files, not core data
