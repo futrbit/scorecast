@@ -104,6 +104,7 @@
         const characterSelection = document.getElementById('character-selection');
         const userIdDisplay = document.getElementById('user-id-display');
         const submitBtn = document.getElementById('submit-btn');
+        const registrationForm = document.getElementById('registration-form');
 
         // Character data, will be updated by the server
         let characters = [];
@@ -117,7 +118,7 @@
                 }
             } catch (error) {
                 console.error("Error signing in:", error);
-                statusMessage.textContent = "Error signing in. Please try refreshing the page.";
+                setStatus("Error signing in. Please try refreshing the page.", true);
             }
         }
 
@@ -174,7 +175,7 @@
         }
 
         async function handleRegistration(e) {
-            e.preventDefault();
+            e.preventDefault(); // <-- This is the crucial line
             setStatus('');
             
             const username = document.getElementById('username').value.trim();
@@ -235,7 +236,7 @@
             if (currentUser) {
                 userIdDisplay.querySelector('span').textContent = currentUser.uid;
                 userIdDisplay.classList.remove('hidden');
-                document.getElementById('registration-form').addEventListener('submit', handleRegistration);
+                registrationForm.addEventListener('submit', handleRegistration);
             } else {
                 setStatus("Authentication failed. Please refresh.", true);
             }
