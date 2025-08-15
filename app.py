@@ -24,12 +24,12 @@ try:
     else:
         print("FIREBASE_KEY environment variable not found. The app will not be able to connect to Firestore.")
 except Exception as e:
-    print(f"Error initializing Firebase from environment variable: {e}")
+    print(f"[ERROR] Error initializing Firebase from environment variable: {e}")
 
 # --- Global Constants and Data ---
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+# Set a more robust BASE_DIR by assuming it's the current working directory
+BASE_DIR = os.getcwd()
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "a_very_secret_key")
 
@@ -38,23 +38,41 @@ socketio = SocketIO(app, async_mode='gevent')
 # --- Utility Function for Loading Local JSON Files ---
 def load_static_json_file(filename):
     """Loads a static JSON file from the project's root directory."""
-    # This path is correct for Render's file structure where the project root is above the src directory
-    filepath = os.path.join(os.path.dirname(BASE_DIR), filename)
+    filepath_relative = os.path.join(BASE_DIR, filename)
+    filepath_src = os.path.join(BASE_DIR, 'src', filename) # For local testing if files are in src
+    
     try:
-        with open(filepath, 'r') as f:
-            return json.load(f)
+        if os.path.exists(filepath_relative):
+            with open(filepath_relative, 'r') as f:
+                return json.load(f)
+        elif os.path.exists(filepath_src):
+            with open(filepath_src, 'r') as f:
+                return json.load(f)
+        else:
+            print(f"[ERROR] Could not find {filename} at {filepath_relative} or {filepath_src}")
+            return {}
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"[ERROR] Could not load {filepath}: {e}")
+        print(f"[ERROR] Could not load {filename}: {e}")
         return {}
 
 # Load static stadium data once on app startup
-# This data does not need to be in Firestore as it's not dynamic.
 stadiums = load_static_json_file("stadium_traits.json")
 
-# --- Route for serving team logos ---
-@app.route('/static/images/<path:filename>')
-def team_logo(filename):
-    return send_from_directory(os.path.join(BASE_DIR, 'static', 'images'), filename)
+# --- Route for serving team logos and character images ---
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Serve all static files from the static directory."""
+    # This path is correct for Render's file structure where the static directory is at the root
+    filepath = os.path.join(BASE_DIR, 'static')
+    if not os.path.exists(filepath):
+        # Fallback for local testing if the static folder is in a 'src' subdirectory
+        filepath = os.path.join(BASE_DIR, 'src', 'static')
+    
+    if not os.path.exists(filepath):
+        print(f"[ERROR] Static directory not found: {filepath}")
+        return "Static directory not found", 404
+
+    return send_from_directory(filepath, filename)
 
 # --- Utility Functions for Firestore Data Fetching ---
 
@@ -187,83 +205,93 @@ def check_db():
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
+    print("[DEBUG] Register route accessed.")
     if not db:
+        print("[ERROR] Database not connected. Redirecting to index.")
         flash("Database not connected. Please contact the administrator.", "error")
         return redirect(url_for("index"))
         
-    characters_folder = os.path.join(BASE_DIR, 'static', 'characters')
     characters = []
+    characters_folder_path = os.path.join(app.root_path, 'static', 'characters')
     try:
-        if os.path.exists(characters_folder):
-            character_files = [f for f in os.listdir(characters_folder) if f.lower().endswith(('.jpeg', '.jpg', '.png'))]
+        if os.path.exists(characters_folder_path):
+            character_files = [f for f in os.listdir(characters_folder_path) if f.lower().endswith(('.jpeg', '.jpg', '.png'))]
             characters = [
-                {'id': i + 1, 'name': os.path.splitext(f)[0], 'image': f'characters/{f}'}
+                {'id': i + 1, 'name': os.path.splitext(f)[0], 'image': f}
                 for i, f in enumerate(character_files)
             ]
+            print(f"[DEBUG] Found {len(characters)} characters.")
         else:
-            print(f"[ERROR] Directory not found: {characters_folder}")
+            print(f"[ERROR] Directory not found: {characters_folder_path}")
             flash("Character images not found. Contact the administrator.", "error")
-    except FileNotFoundError:
-        flash("Character images not found. Contact the administrator.", "error")
-        print(f"[ERROR] Directory not found: {characters_folder}")
     except Exception as e:
-        print(f"[ERROR] Failed to load character images: {e}")
+        print(f"[ERROR] Failed to load character images from {characters_folder_path}: {e}")
         flash(f"Failed to load characters: {str(e)}", "error")
 
     if request.method == "POST":
-        username = request.form["username"].strip()
-        password = request.form["password"]
+        print("[DEBUG] Processing POST request for registration.")
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
         confirm_password = request.form.get("confirm_password", "")
-        character_id = request.form.get("character")
+        character_image_name = request.form.get("character", "")
+        
+        print(f"[DEBUG] Form data received - Username: '{username}', Character: '{character_image_name}'")
 
-        if not username or not password or not confirm_password or not character_id:
+        if not username or not password or not confirm_password or not character_image_name:
+            print("[ERROR] Missing required form fields.")
             flash("All fields are required.", "error")
             return redirect(url_for("register"))
 
         if password != confirm_password:
+            print("[ERROR] Passwords do not match.")
             flash("Passwords do not match.", "error")
             return redirect(url_for("register"))
 
         if len(password) < 8:
+            print("[ERROR] Password is too short.")
             flash("Password must be at least 8 characters long.", "error")
             return redirect(url_for("register"))
+        
+        selected_character = next((c for c in characters if c['image'] == character_image_name), None)
+        if not selected_character:
+            print(f"[ERROR] Selected character '{character_image_name}' not found in loaded characters list.")
+            flash("Invalid character selection.", "error")
+            return redirect(url_for("register"))
+
 
         try:
+            print(f"[DEBUG] Checking if username '{username}' exists.")
             user_ref = db.collection('users').document(username)
             if user_ref.get().exists:
+                print(f"[ERROR] Username '{username}' already exists.")
                 flash("Username already taken. Please choose another.", "error")
                 return redirect(url_for("register"))
-        except Exception as e:
-            flash(f"Error checking user: {str(e)}", "error")
-            print(f"[ERROR] Firestore error checking for existing user: {e}")
-            return redirect(url_for("register"))
-
-        selected_character = next((c for c in characters if str(c['id']) == character_id), None)
-        if not selected_character:
-            flash("Invalid character selected.", "error")
-            return redirect(url_for("register"))
-
-        hashed_pw = generate_password_hash(password)
-        
-        user_data = {
-            "password": hashed_pw,
-            "points": 0,
-            "group": "A",
-            "character": selected_character['name'],
-            "predictions": {},
-            "points_by_week": {}
-        }
-        
-        try:
+            
+            print(f"[DEBUG] Username '{username}' is available. Hashing password.")
+            hashed_pw = generate_password_hash(password)
+            
+            user_data = {
+                "password": hashed_pw,
+                "points": 0,
+                "group": "A",
+                "character": selected_character['name'],
+                "predictions": {},
+                "points_by_week": {}
+            }
+            
+            print(f"[DEBUG] Saving new user data for '{username}'.")
             user_ref.set(user_data)
+            print(f"[DEBUG] User '{username}' successfully registered and saved.")
             flash("Registration successful! Please log in.", "success")
             return redirect(url_for("login"))
+            
         except Exception as e:
-            flash(f"Error saving user data: {str(e)}", "error")
-            print(f"[ERROR] Firestore error saving user data: {e}")
+            print(f"[CRITICAL ERROR] Error during registration process: {e}")
+            flash(f"An unexpected error occurred: {str(e)}. Please try again.", "error")
             return redirect(url_for("register"))
 
     return render_template("register.html", characters=characters)
+
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
