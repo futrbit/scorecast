@@ -52,55 +52,32 @@
         <h1 class="text-4xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600">
             Create Your Account
         </h1>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <ul class="list-none p-0">
-            {% for category, message in messages %}
-            <li class="p-2 my-2 rounded-lg text-sm text-center {% if category == 'error' %}bg-red-900 text-red-300{% else %}bg-green-900 text-green-300{% endif %}">
-                {{ message }}
-            </li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {% endwith %}
+        <p class="text-center text-gray-400 mb-8">
+            Choose a unique username and a character to represent you.
+        </p>
 
-        <form action="{{ url_for('register') }}" method="POST" class="space-y-6">
+        <div id="status-message" class="text-center mb-4 text-red-400"></div>
+
+        <form id="registration-form" class="space-y-6">
             <div>
                 <label for="username" class="block text-sm font-medium text-gray-300 mb-1">Username</label>
                 <input type="text" id="username" name="username" placeholder="Choose a username"
                        class="w-full px-4 py-2 rounded-lg input-field" autocomplete="username" required>
             </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter a password"
-                       class="w-full px-4 py-2 rounded-lg input-field" autocomplete="new-password" required>
-            </div>
-            <div>
-                <label for="confirm_password" class="block text-sm font-medium text-gray-300 mb-1">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter password"
-                       class="w-full px-4 py-2 rounded-lg input-field" autocomplete="new-password" required>
-            </div>
             
             <div class="mt-8">
                 <label class="block text-sm font-medium text-gray-300 mb-2">Select a Character</label>
                 <div id="character-selection" class="grid grid-cols-4 sm:grid-cols-6 gap-4 justify-items-center">
-                    {% for character in characters %}
-                    <div class="flex flex-col items-center">
-                        <label>
-                            <input type="radio" name="character" value="{{ character.image }}" class="hidden" required>
-                            <div class="character-img-container">
-                                <img src="{{ url_for('static_files', filename=character.image) }}" alt="{{ character.name }}" class="rounded-full w-full h-full object-cover">
-                            </div>
-                        </label>
-                        <span class="mt-2 text-xs text-center text-gray-400">{{ character.name }}</span>
-                    </div>
-                    {% endfor %}
+                    <!-- Characters will be dynamically rendered here -->
                 </div>
             </div>
 
-            <button type="submit" class="w-full py-3 mt-8 rounded-lg font-bold text-white btn">
+            <button type="submit" id="submit-btn" class="w-full py-3 mt-8 rounded-lg font-bold text-white btn">
                 Register
             </button>
+            <p id="user-id-display" class="text-xs text-gray-500 mt-2 text-center hidden">
+                Your user ID is: <span class="font-mono break-all"></span>
+            </p>
         </form>
 
         <div class="mt-6 text-center text-gray-400">
@@ -108,12 +85,79 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const characterSelection = document.getElementById('character-selection');
-            const characterRadios = document.querySelectorAll('input[name="character"]');
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDocs, collection, query, where, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-            // Select the first character by default
+        // Global variables provided by the environment. Do not modify.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+        const statusMessage = document.getElementById('status-message');
+        const characterSelection = document.getElementById('character-selection');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Character data, will be updated by the server
+        let characters = [];
+
+        async function authenticateUser() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Error signing in:", error);
+                statusMessage.textContent = "Error signing in. Please try refreshing the page.";
+            }
+        }
+
+        function setStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.className = isError ? 'text-red-400' : 'text-green-400';
+        }
+
+        async function fetchCharacters() {
+            try {
+                // Fetch character names from a known location (e.g., a simple API endpoint)
+                const response = await fetch('/static/characters.json');
+                if (!response.ok) throw new Error('Failed to fetch character list.');
+                characters = await response.json();
+                renderCharacters();
+            } catch (error) {
+                console.error("Error fetching characters:", error);
+                setStatus("Could not load characters. Please refresh.", true);
+            }
+        }
+
+        function renderCharacters() {
+            if (characters.length === 0) {
+                characterSelection.innerHTML = '<p class="text-center text-gray-500">No characters available.</p>';
+                return;
+            }
+            
+            characterSelection.innerHTML = characters.map(char => `
+                <div class="flex flex-col items-center">
+                    <label>
+                        <input type="radio" name="character" value="${char.image}" class="hidden" required>
+                        <div class="character-img-container">
+                            <img src="/static/${char.image}" alt="${char.name}" class="rounded-full w-full h-full object-cover">
+                        </div>
+                    </label>
+                    <span class="mt-2 text-xs text-center text-gray-400">${char.name}</span>
+                </div>
+            `).join('');
+
+            const characterRadios = document.querySelectorAll('input[name="character"]');
             if (characterRadios.length > 0) {
                 characterRadios[0].checked = true;
                 characterRadios[0].closest('label').querySelector('.character-img-container').classList.add('selected');
@@ -121,15 +165,84 @@
 
             characterRadios.forEach(radio => {
                 radio.addEventListener('change', (e) => {
-                    // Remove 'selected' class from all containers
                     document.querySelectorAll('.character-img-container').forEach(container => {
                         container.classList.remove('selected');
                     });
-                    // Add 'selected' class to the parent of the checked radio
                     e.target.closest('label').querySelector('.character-img-container').classList.add('selected');
                 });
             });
+        }
+
+        async function handleRegistration(e) {
+            e.preventDefault();
+            setStatus('');
+            
+            const username = document.getElementById('username').value.trim();
+            const selectedCharacter = document.querySelector('input[name="character"]:checked');
+
+            if (!username) {
+                setStatus("Please enter a username.", true);
+                return;
+            }
+
+            if (!selectedCharacter) {
+                setStatus("Please select a character.", true);
+                return;
+            }
+
+            submitBtn.textContent = "Registering...";
+            submitBtn.disabled = true;
+
+            try {
+                // Check if username is already taken
+                const usersRef = collection(db, `/artifacts/${appId}/users`);
+                const q = query(usersRef, where("username", "==", username));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    setStatus("Username already taken. Please choose another.", true);
+                    submitBtn.textContent = "Register";
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                // If username is available, save the user data
+                const userDocRef = doc(usersRef, currentUser.uid);
+                await setDoc(userDocRef, {
+                    username: username,
+                    character: selectedCharacter.value,
+                    userId: currentUser.uid,
+                    points: 0,
+                    predictions: {},
+                    points_by_week: {}
+                });
+
+                setStatus("Registration successful!", false);
+                // Redirect to profile page after a brief delay
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('profile') }}";
+                }, 1500);
+
+            } catch (error) {
+                console.error("Registration error:", error);
+                setStatus("An unexpected error occurred. Please try again.", true);
+                submitBtn.textContent = "Register";
+                submitBtn.disabled = false;
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (currentUser) {
+                userIdDisplay.querySelector('span').textContent = currentUser.uid;
+                userIdDisplay.classList.remove('hidden');
+                document.getElementById('registration-form').addEventListener('submit', handleRegistration);
+            } else {
+                setStatus("Authentication failed. Please refresh.", true);
+            }
         });
+
+        authenticateUser();
+        fetchCharacters();
     </script>
 </body>
 </html>
