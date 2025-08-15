@@ -1,130 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Scorecast</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8" />
+    <title>Register - SCORECAST</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #E0E0E0;
+            font-family: 'Press Start 2P', monospace;
+            background-color: #050505;
+            color: #00ffcc;
+            image-rendering: pixelated;
+            background-image: radial-gradient(#222 1px, transparent 1px);
+            background-size: 20px 20px;
+            margin: 0;
+            padding: 0;
         }
-        .container {
-            max-width: 600px;
+
+        main {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2.5rem;
         }
-        .input-field {
-            background-color: #1E1E1E;
-            border: 1px solid #333;
-            color: #E0E0E0;
-            transition: all 0.3s ease;
+
+        .register-box {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffcc;
+            box-shadow: 0 0 10px #00ffcc, 0 0 20px #1affd5;
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
         }
-        .input-field:focus {
+
+        h2 {
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff, 0 0 15px #00ffff;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.7rem;
+            color: #00ffcc;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            background: #000;
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            padding: 0.4rem;
+            font-family: 'Press Start 2P', monospace;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input:focus {
             outline: none;
-            border-color: #4A90E2;
-            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.5);
+            border-color: #1affd5;
+            box-shadow: 0 0 5px #1affd5;
         }
-        .btn {
-            background-color: #4A90E2;
-            transition: background-color 0.3s ease;
+
+        .character-grid {
+            display: flex;
+            flex-wrap: wrap;
+            overflow-y: auto;
+            max-height: 300px;
+            gap: 10px;
+            padding: 10px;
+            background-color: #000;
+            border: 1px solid #00ffcc;
+            box-shadow: 0 0 10px #00ffcc;
+            border-radius: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: #555 #2c2c2c;
         }
-        .btn:hover {
-            background-color: #357ABD;
-        }
-        .character-img-container {
-            width: 80px;
-            height: 80px;
-            border: 3px solid transparent;
+
+        .character-card {
+            flex: 0 0 auto;
+            width: 100px;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            border-radius: 9999px; /* Tailwind's rounded-full */
+            padding: 5px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .character-img-container.selected {
-            border-color: #4A90E2;
-            transform: scale(1.1);
+
+        .character-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #00ffcc;
+        }
+
+        .character-card:hover {
+            transform: scale(1.05);
+            border-color: #1affd5;
+            box-shadow: 0 0 10px #1affd5;
+        }
+
+        .character-card.selected {
+            border-color: #00ffff;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .character-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .character-grid::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        .character-grid::-webkit-scrollbar-track {
+            background: #2c2c2c;
+        }
+
+        button {
+            background-color: #00ffcc;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+            font-family: 'Press Start 2P', monospace;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #1affd5;
+            box-shadow: 0 0 15px #1affd5, 0 0 30px #1affd5;
+        }
+
+        .messages {
+            padding: 1rem;
+            background-color: #111;
+            border-left: 5px solid #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+            color: #fff;
+            max-width: 100%;
+            font-size: 0.7rem;
+            margin-bottom: 1rem;
+        }
+
+        a {
+            color: #00ffff;
+            text-decoration: none;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        a:hover {
+            color: #1affd5;
+            text-shadow: 0 0 10px #1affd5;
         }
     </style>
 </head>
-<body class="p-4 flex items-center justify-center min-h-screen">
-    <div class="container bg-[#1e1e1e] p-8 rounded-xl shadow-lg border border-[#333]">
-        <h1 class="text-4xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600">
-            Create Your Account
-        </h1>
-        <p class="text-center text-gray-400 mb-8">
-            Choose a unique username and a character to represent you.
-        </p>
+<body>
+    <main>
+        <div class="register-box">
+            <h2>Register on K3NN</h2>
 
-        <div id="status-message" class="text-center mb-4 text-red-400"></div>
+            <div id="status-message" class="messages" style="display:none;"></div>
 
-        <form id="registration-form" class="space-y-6">
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-300 mb-1">Username</label>
-                <input type="text" id="username" name="username" placeholder="Choose a username"
-                       class="w-full px-4 py-2 rounded-lg input-field" autocomplete="username" required>
-            </div>
-            
-            <div class="mt-8">
-                <label class="block text-sm font-medium text-gray-300 mb-2">Select a Character</label>
-                <div id="character-selection" class="grid grid-cols-4 sm:grid-cols-6 gap-4 justify-items-center">
-                    <!-- Characters will be dynamically rendered here -->
+            <form id="registration-form" method="POST" action="">
+                <div class="form-group">
+                    <label for="username">Choose a username:</label>
+                    <input type="text" id="username" name="username" required autofocus />
                 </div>
-            </div>
 
-            <button type="submit" id="submit-btn" class="w-full py-3 mt-8 rounded-lg font-bold text-white btn">
-                Register
-            </button>
-            <p id="user-id-display" class="text-xs text-gray-500 mt-2 text-center hidden">
-                Your user ID is: <span class="font-mono break-all"></span>
+                <div class="form-group">
+                    <label for="password">Choose a password:</label>
+                    <input type="password" id="password" name="password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm password:</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Select your character:</label>
+                    <div id="character-grid" class="character-grid">
+                        <!-- Characters will be dynamically rendered here by JavaScript -->
+                    </div>
+                    <input type="hidden" id="character" name="character" required />
+                </div>
+
+                <button type="submit" id="submit-btn">Register</button>
+            </form>
+
+            <p class="text-center mt-3">
+                Already have an account? <a href="{{ url_for('login') }}">Login here</a>
             </p>
-        </form>
-
-        <div class="mt-6 text-center text-gray-400">
-            Already have an account? <a href="{{ url_for('login') }}" class="text-blue-400 hover:underline">Login here</a>
         </div>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDocs, collection, query, where, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables provided by the environment. Do not modify.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+        
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
         let currentUser = null;
         const statusMessage = document.getElementById('status-message');
-        const characterSelection = document.getElementById('character-selection');
-        const userIdDisplay = document.getElementById('user-id-display');
+        const characterGrid = document.getElementById('character-grid');
         const submitBtn = document.getElementById('submit-btn');
         const registrationForm = document.getElementById('registration-form');
-
-        // Character data, will be updated by the server
+        const hiddenCharacterInput = document.getElementById('character');
+        
         let characters = [];
-
-        async function authenticateUser() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Error signing in:", error);
-                setStatus("Error signing in. Please try refreshing the page.", true);
-            }
-        }
 
         function setStatus(message, isError = false) {
             statusMessage.textContent = message;
-            statusMessage.className = isError ? 'text-red-400' : 'text-green-400';
+            statusMessage.style.display = 'block';
+            statusMessage.style.borderColor = isError ? '#ff0000' : '#00ffcc';
+            statusMessage.style.boxShadow = isError ? '0 0 10px #ff0000' : '0 0 10px #00ffcc';
         }
 
         async function fetchCharacters() {
@@ -142,51 +256,49 @@
 
         function renderCharacters() {
             if (characters.length === 0) {
-                characterSelection.innerHTML = '<p class="text-center text-gray-500">No characters available.</p>';
+                characterGrid.innerHTML = '<p class="text-center" style="font-size:0.7rem;">No characters available.</p>';
                 return;
             }
             
-            characterSelection.innerHTML = characters.map(char => `
-                <div class="flex flex-col items-center">
-                    <label>
-                        <input type="radio" name="character" value="${char.image}" class="hidden" required>
-                        <div class="character-img-container">
-                            <img src="/static/${char.image}" alt="${char.name}" class="rounded-full w-full h-full object-cover">
-                        </div>
-                    </label>
-                    <span class="mt-2 text-xs text-center text-gray-400">${char.name}</span>
+            characterGrid.innerHTML = characters.map(char => `
+                <div class="character-card" data-id="${char.id}">
+                    <img src="/static/${char.image}" alt="${char.name}" />
                 </div>
             `).join('');
 
-            const characterRadios = document.querySelectorAll('input[name="character"]');
-            if (characterRadios.length > 0) {
-                characterRadios[0].checked = true;
-                characterRadios[0].closest('label').querySelector('.character-img-container').classList.add('selected');
-            }
-
-            characterRadios.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    document.querySelectorAll('.character-img-container').forEach(container => {
-                        container.classList.remove('selected');
-                    });
-                    e.target.closest('label').querySelector('.character-img-container').classList.add('selected');
+            document.querySelectorAll('.character-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    hiddenCharacterInput.value = card.dataset.id;
                 });
             });
+            // Automatically select the first character to ensure a choice is made
+            if (document.querySelectorAll('.character-card').length > 0) {
+                document.querySelectorAll('.character-card')[0].click();
+            }
         }
 
         async function handleRegistration(e) {
-            e.preventDefault(); // <-- This is the crucial line
-            setStatus('');
+            e.preventDefault(); // Prevents the browser from doing a full page reload and causing a server timeout.
+            setStatus('', false);
             
             const username = document.getElementById('username').value.trim();
-            const selectedCharacter = document.querySelector('input[name="character"]:checked');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const selectedCharacterId = hiddenCharacterInput.value;
+
+            if (password !== confirmPassword) {
+                setStatus("Passwords do not match.", true);
+                return;
+            }
 
             if (!username) {
                 setStatus("Please enter a username.", true);
                 return;
             }
-
-            if (!selectedCharacter) {
+            
+            if (!selectedCharacterId) {
                 setStatus("Please select a character.", true);
                 return;
             }
@@ -195,23 +307,18 @@
             submitBtn.disabled = true;
 
             try {
-                // Check if username is already taken
-                const usersRef = collection(db, `/artifacts/${appId}/users`);
-                const q = query(usersRef, where("username", "==", username));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    setStatus("Username already taken. Please choose another.", true);
-                    submitBtn.textContent = "Register";
-                    submitBtn.disabled = false;
-                    return;
-                }
+                // Check if username is already taken. For this to work with email/password auth,
+                // we treat the username as the email address. We can use a unique domain to avoid real email conflicts.
+                const userEmail = `${username}@scorecast.com`;
+                const userCredential = await createUserWithEmailAndPassword(auth, userEmail, password);
+                const user = userCredential.user;
 
-                // If username is available, save the user data
-                const userDocRef = doc(usersRef, currentUser.uid);
+                // Save the user data to Firestore
+                const userDocRef = doc(db, `/artifacts/${appId}/users`, user.uid);
                 await setDoc(userDocRef, {
                     username: username,
-                    character: selectedCharacter.value,
-                    userId: currentUser.uid,
+                    character: selectedCharacterId,
+                    userId: user.uid,
                     points: 0,
                     predictions: {},
                     points_by_week: {}
@@ -225,24 +332,23 @@
 
             } catch (error) {
                 console.error("Registration error:", error);
-                setStatus("An unexpected error occurred. Please try again.", true);
+                let errorMessage = "An unexpected error occurred. Please try again.";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "This username is already taken. Please choose another.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "The password is too weak. Please choose a stronger password.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "Please enter a valid username/email.";
+                }
+                setStatus(errorMessage, true);
                 submitBtn.textContent = "Register";
                 submitBtn.disabled = false;
             }
         }
 
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (currentUser) {
-                userIdDisplay.querySelector('span').textContent = currentUser.uid;
-                userIdDisplay.classList.remove('hidden');
-                registrationForm.addEventListener('submit', handleRegistration);
-            } else {
-                setStatus("Authentication failed. Please refresh.", true);
-            }
-        });
-
-        authenticateUser();
+        // We only attach the event listener after the form and scripts are loaded.
+        registrationForm.addEventListener('submit', handleRegistration);
+        
         fetchCharacters();
     </script>
 </body>
