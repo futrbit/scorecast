@@ -59,20 +59,12 @@ def load_static_json_file(filename):
 stadiums = load_static_json_file("stadium_traits.json")
 
 # --- Route for serving team logos and character images ---
+# This route is correctly configured to handle all files within the static folder, including subdirectories.
 @app.route('/static/<path:filename>')
 def static_files(filename):
     """Serve all static files from the static directory."""
-    # Use the a robust path that is compatible with Render's file structure
-    static_folder = 'static'
-    filepath = os.path.join(os.path.abspath('.'), static_folder)
-    
-    print(f"[DEBUG] Attempting to serve static file from: {filepath}")
-    
-    if not os.path.exists(filepath):
-        print(f"[ERROR] Static directory not found: {filepath}")
-        return "Static directory not found", 404
-
-    return send_from_directory(filepath, filename)
+    # app.static_folder is the canonical way to reference the static directory
+    return send_from_directory(app.static_folder, filename)
 
 # --- Utility Functions for Firestore Data Fetching ---
 
@@ -216,8 +208,9 @@ def register():
     try:
         if os.path.exists(characters_folder_path):
             character_files = [f for f in os.listdir(characters_folder_path) if f.lower().endswith(('.jpeg', '.jpg', '.png'))]
+            # Fix: Prepend the subdirectory to the image path so the URL is correct
             characters = [
-                {'id': i + 1, 'name': os.path.splitext(f)[0], 'image': f}
+                {'id': i + 1, 'name': os.path.splitext(f)[0], 'image': os.path.join('characters', f).replace('\\', '/')}
                 for i, f in enumerate(character_files)
             ]
             print(f"[DEBUG] Found {len(characters)} characters.")
