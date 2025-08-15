@@ -213,19 +213,28 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDocs, collection, query, where, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
         // Global variables provided by the environment. Do not modify.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // YOUR web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDliQU54g3iKaV3cRSlVFQIGe2V-BojV5A",
+            authDomain: "scorecast-d8d11.firebaseapp.com",
+            projectId: "scorecast-d8d11",
+            storageBucket: "scorecast-d8d11.firebasestorage.app",
+            messagingSenderId: "465419466489",
+            appId: "1:465419466489:web:24852150f270a3221b5428",
+            measurementId: "G-H515J485SK"
+        };
         
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        let currentUser = null;
         const statusMessage = document.getElementById('status-message');
         const characterGrid = document.getElementById('character-grid');
         const submitBtn = document.getElementById('submit-btn');
